@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,57 +18,42 @@ interface FavoriteItem {
   genres: string[]
 }
 
-const mockFavorites: FavoriteItem[] = [
-  {
-    id: "1",
-    title: "Attack on Titan",
-    type: "anime",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.0,
-    year: 2013,
-    addedDate: "2024-01-15",
-    genres: ["Action", "Drama"],
-  },
-  {
-    id: "2",
-    title: "The Dark Knight",
-    type: "movie",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.0,
-    year: 2008,
-    addedDate: "2024-01-10",
-    genres: ["Action", "Crime"],
-  },
-  {
-    id: "3",
-    title: "Breaking Bad",
-    type: "series",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.5,
-    year: 2008,
-    addedDate: "2024-01-05",
-    genres: ["Crime", "Drama"],
-  },
-  {
-    id: "4",
-    title: "One Piece",
-    type: "manga",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.2,
-    year: 1997,
-    addedDate: "2024-01-01",
-    genres: ["Adventure", "Comedy"],
-  },
-]
-
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>(mockFavorites)
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const [selectedType, setSelectedType] = useState<string>("all")
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredFavorites = favorites.filter((item) => selectedType === "all" || item.type === selectedType)
+  useEffect(() => {
+    async function fetchFavorites() {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Replace the URL with your actual API endpoint
+        const response = await fetch("/api/favorites")
+        if (!response.ok) {
+          throw new Error(`Failed to fetch favorites: ${response.statusText}`)
+        }
+        const data: FavoriteItem[] = await response.json()
+        setFavorites(data)
+      } catch (err: any) {
+        setError(err.message || "Something went wrong")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFavorites()
+  }, [])
+
+  const filteredFavorites = favorites.filter(
+    (item) => selectedType === "all" || item.type === selectedType
+  )
 
   const removeFavorite = (id: string) => {
-    setFavorites(favorites.filter((item) => item.id !== id))
+    setFavorites((prev) => prev.filter((item) => item.id !== id))
+    // Optionally call an API to remove favorite from backend here
   }
 
   const getTypeColor = (type: string) => {
@@ -105,10 +90,25 @@ export default function FavoritesPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading favorites...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Error: {error}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
-   
-  <Sidebar />
+      <Sidebar />
 
       {/* Header */}
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-30">
@@ -119,16 +119,9 @@ export default function FavoritesPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10"
-              
-              >
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                 <Search className="h-5 w-5" />
               </Button>
-
-   
             </div>
           </div>
         </div>
@@ -204,7 +197,9 @@ export default function FavoritesPage() {
                         </Badge>
                       </div>
                       <div className="absolute top-2 left-2">
-                        <Badge className={`${getTypeColor(item.type)} text-white`}>{getTypeLabel(item.type)}</Badge>
+                        <Badge className={`${getTypeColor(item.type)} text-white`}>
+                          {getTypeLabel(item.type)}
+                        </Badge>
                       </div>
                       <div className="absolute bottom-2 right-2">
                         <Button
