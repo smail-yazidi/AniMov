@@ -1,34 +1,27 @@
-import { NextResponse } from 'next/server';
-import connectToDatabase from '../../../../lib/mongodb'; // Adjust path if needed
-import { UserModel } from '../../../../models/User';
-import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from "next/server";
+import connectToDatabase from "@/lib/connectToDatabase";
+import User from "@/models/User"; // Your Mongoose user model
+import bcrypt from "bcryptjs";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-    }
-
     await connectToDatabase();
+    const { email, password } = await req.json();
 
-    const user = await UserModel.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Compare password
-    const isMatch = await bcrypt.compare(password, (user as any).password);
-    if (!isMatch) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // TODO: Generate JWT or session here (if you want)
-
-    return NextResponse.json({ message: 'Signed in successfully', userId: user._id });
+    // Return success response (e.g., user data or token)
+    return NextResponse.json({ message: "Signed in successfully" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Signin error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
