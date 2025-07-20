@@ -14,20 +14,17 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
-    // Check if user already exists
     const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new UserModel({
       email,
       username,
       displayName,
-      // Store hashed password, you can add password field in your User schema accordingly
       password: hashedPassword,
       preferences: {
         language: 'en',
@@ -56,6 +53,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'User created successfully' }, { status: 201 });
   } catch (error) {
+    console.error("Signup error:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
