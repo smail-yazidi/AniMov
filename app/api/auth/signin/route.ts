@@ -5,16 +5,35 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("Request received");
+
+    const bodyText = await req.text();
+    console.log("Raw body:", bodyText);
+
+    const { email, password } = JSON.parse(bodyText);
+    console.log("Parsed email:", email);
+    console.log("Parsed password:", password);
+
     await connectToDatabase();
-    console.log("DB connected");
 
-    const { email, password } = await req.json();
-    console.log("Request body:", { email, password });
+    const user = await UserModel.findOne({ email });
+    console.log("User found:", !!user);
 
-    // just send a test response to check if this works
-    return NextResponse.json({ message: "Test OK" }, { status: 200 });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("Password valid?", isPasswordValid);
+
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    return NextResponse.json({ message: "Signed in successfully" }, { status: 200 });
   } catch (error) {
     console.error("Signin error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
