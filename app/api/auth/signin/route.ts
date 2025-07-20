@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Create a session and return session ID
-    const sessionId = createSession(user._id.toString())
+// Replace: const sessionId = createSession(user._id.toString())
+const sessionId = await createSession(user._id.toString())
 
     return NextResponse.json({
       message: "Signed in successfully",

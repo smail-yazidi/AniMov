@@ -1,18 +1,27 @@
-// lib/session-store.ts
-type SessionStore = Map<string, { userId: string }>
+import { SessionModel } from "@/models/Session"
+import { v4 as uuidv4 } from "uuid"
+import connectToDatabase from "./mongodb"
 
-const sessionStore: SessionStore = new Map()
+export async function createSession(userId: string): Promise<string> {
+  await connectToDatabase()
+  const sessionId = uuidv4()
 
-export function createSession(userId: string): string {
-  const sessionId = crypto.randomUUID()
-  sessionStore.set(sessionId, { userId })
+  await SessionModel.create({
+    sessionId,
+    userId,
+  })
+
   return sessionId
 }
 
-export function getSession(sessionId: string) {
-  return sessionStore.get(sessionId)
+export async function getSession(sessionId: string) {
+  await connectToDatabase()
+  const session = await SessionModel.findOne({ sessionId })
+
+  return session
 }
 
-export function destroySession(sessionId: string) {
-  sessionStore.delete(sessionId)
+export async function destroySession(sessionId: string) {
+  await connectToDatabase()
+  await SessionModel.deleteOne({ sessionId })
 }
