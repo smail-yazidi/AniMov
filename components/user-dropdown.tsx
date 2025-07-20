@@ -9,7 +9,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 
-// Helper function to get initials from name
 const getInitials = (name?: string) => {
   if (!name) return "?"
   const words = name.trim().split(" ")
@@ -36,32 +35,39 @@ export function UserDropdown({ className }: UserDropdownProps) {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Check for logged-in user on component mount
-useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const sessionId = localStorage.getItem("sessionId")
-      if (!sessionId) return
+  // Fetch session on mount, using sessionId stored in localStorage
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const sessionId = localStorage.getItem("sessionId")
+        if (!sessionId) {
+          setUser(null)
+          return
+        }
 
-      const res = await fetch("/api/auth/session", {
-        method: "GET",
-        headers: { authorization: sessionId },
-      })
+        const res = await fetch("/api/auth/session", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sessionId}`,  // Typically Bearer token, adjust if your API expects differently
+          },
+        })
 
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data.user)
-      } else {
+        if (res.ok) {
+          const data = await res.json()
+          setUser(data.user)  // Make sure your API returns user info inside `user` key
+        } else {
+          setUser(null)
+          localStorage.removeItem("sessionId") // Clear invalid session
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error)
         setUser(null)
+        localStorage.removeItem("sessionId")
       }
-    } catch (error) {
-      console.error("Error checking auth status:", error)
-      setUser(null)
     }
-  }
 
-  checkAuth()
-}, [])
+    checkAuth()
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,7 +86,7 @@ useEffect(() => {
     }
   }, [isOpen])
 
-  // Close dropdown on escape key
+  // Close dropdown on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -97,17 +103,16 @@ useEffect(() => {
     }
   }, [isOpen])
 
- const handleLogout = () => {
-  localStorage.removeItem("sessionId")
-  setUser(null)
-  toast({
-    title: "Logged out",
-    description: "You have been successfully logged out.",
-  })
-  router.push("/auth/signin")
-  setIsOpen(false)
-}
-
+  const handleLogout = () => {
+    localStorage.removeItem("sessionId")
+    setUser(null)
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    })
+    router.push("/auth/signin")
+    setIsOpen(false)
+  }
 
   if (!user) {
     return (
@@ -121,7 +126,6 @@ useEffect(() => {
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Avatar Button */}
       <Button
         variant="ghost"
         size="sm"
@@ -136,7 +140,6 @@ useEffect(() => {
         </Avatar>
       </Button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <Card className="absolute right-0 top-full mt-2 w-64 bg-slate-900/95 backdrop-blur-md border-white/20 shadow-xl z-50">
           <CardContent className="p-0">
