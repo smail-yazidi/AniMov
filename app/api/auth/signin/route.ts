@@ -1,49 +1,34 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { usersService } from "@/lib/database/users"
-import jwt from "jsonwebtoken"
+import { NextResponse } from 'next/server';
+import connectToDatabase from '../../../../lib/mongodb'; // Adjust path if needed
+import { UserModel } from '../../../../models/User';
+import bcrypt from 'bcryptjs';
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json();
+    const { email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    // Find user by email
-    const user = await usersService.getUserByEmail(email)
+    await connectToDatabase();
+
+    const user = await UserModel.findOne({ email });
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // For now, we'll create a simple auth token
-    // In production, you'd want to use a proper auth solution like NextAuth.js
-    const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: "7d" })
+    // Compare password
+    const isMatch = await bcrypt.compare(password, (user as any).password);
+    if (!isMatch) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
 
-    const response = NextResponse.json({
-      message: "Login successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        displayName: user.displayName,
-        avatar: user.avatar,
-      },
-    })
+    // TODO: Generate JWT or session here (if you want)
 
-    // Set HTTP-only cookie
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    })
-
-    return response
+    return NextResponse.json({ message: 'Signed in successfully', userId: user._id });
   } catch (error) {
-    console.error("Signin error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
