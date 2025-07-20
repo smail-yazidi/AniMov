@@ -41,6 +41,9 @@ export default function SignInPage() {
         throw new Error(data.error || "Sign in failed")
       }
 
+      // احفظ الـ sessionId في localStorage
+      localStorage.setItem("sessionId", data.sessionId)
+
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
