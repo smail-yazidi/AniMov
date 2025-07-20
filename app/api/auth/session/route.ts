@@ -6,7 +6,7 @@ import connectToDatabase from "@/lib/mongodb"
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization")
-  const sessionId = authHeader?.split(" ")[1] // ✅ extract just the session ID
+  const sessionId = authHeader?.replace("Bearer ", "")
 
   if (!sessionId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

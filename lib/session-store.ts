@@ -14,12 +14,19 @@ export async function createSession(userId: string): Promise<string> {
   return sessionId
 }
 
+
 export async function getSession(sessionId: string) {
   await connectToDatabase()
-  const session = await SessionModel.findOne({ sessionId })
+  const now = new Date()
+
+  const session = await SessionModel.findOne({
+    sessionId,
+    expiresAt: { $gt: now }, // ✅ only return if session is still valid
+  })
 
   return session
 }
+
 
 export async function destroySession(sessionId: string) {
   await connectToDatabase()
