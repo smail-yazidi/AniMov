@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/connectToDatabase";
-import User from "@/models/User"; // Your Mongoose user model
+import connectToDatabase from "@/lib/mongodb";
+import { UserModel } from "@/models/User"; // Make sure this matches your export
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
     const { email, password } = await req.json();
 
-    const user = await User.findOne({ email });
+    const user = await UserModel.findOne({ email });  // <-- Use UserModel here
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // Return success response (e.g., user data or token)
     return NextResponse.json({ message: "Signed in successfully" }, { status: 200 });
   } catch (error) {
     console.error("Signin error:", error);
