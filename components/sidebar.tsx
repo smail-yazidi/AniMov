@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Home, Heart, Clock, Users, Film, Tv, Play, BookOpen, Settings, Menu, X, Book } from "lucide-react"
@@ -28,9 +28,58 @@ interface SidebarProps {
   className?: string
 }
 
+const getInitials = (name?: string) => {
+  if (!name) return "?"
+  const words = name.trim().split(" ")
+  if (words.length >= 2) {
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase()
+  }
+  return words[0].charAt(0).toUpperCase()
+}
+
 export function Sidebar({ className }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const [user, setUser] = useState<{
+    id: string
+    email: string
+    username?: string
+    displayName?: string
+    avatar?: string
+  } | null>(null)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const sessionId = localStorage.getItem("sessionId")
+        if (!sessionId) {
+          setUser(null)
+          return
+        }
+
+        const res = await fetch("/api/auth/session", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sessionId}`,
+          },
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setUser(data.user)
+        } else {
+          setUser(null)
+          localStorage.removeItem("sessionId")
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error)
+        setUser(null)
+        localStorage.removeItem("sessionId")
+      }
+    }
+
+    checkAuth()
+  }, [])
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen)
@@ -71,7 +120,7 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
             <div>
               <h2 className="text-white font-semibold text-lg">AniMov</h2>
-           </div>
+            </div>
           </div>
         </div>
 
@@ -111,20 +160,36 @@ export function Sidebar({ className }: SidebarProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm">
-                JD
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium text-sm truncate">John Doe</p>
-              <p className="text-gray-400 text-xs truncate">@johndoe</p>
-            </div>
+        {user ? (
+          <div className="p-4 border-t border-white/10">
+            <Link href="/profile" onClick={closeSidebar}>
+              <div className="flex items-center gap-3 hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={user.avatar || "/placeholder-user.jpg"} alt="User" />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm">
+                    {getInitials(user.displayName || user.username || user.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm truncate">
+                    {user.displayName || user.username || user.email.split('@')[0]}
+                  </p>
+                  {user.username && (
+                    <p className="text-gray-400 text-xs truncate">@{user.username}</p>
+                  )}
+                </div>
+              </div>
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="p-4 border-t border-white/10">
+            <Link href="/auth/signin" onClick={closeSidebar}>
+              <Button variant="outline" className="w-full">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        )}
       </aside>
     </>
   )
