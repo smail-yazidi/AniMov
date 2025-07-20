@@ -49,6 +49,7 @@
     "embla-carousel-react": "latest",
     "gcp-metadata": "latest",
     "input-otp": "latest",
+    "iron-session": "^8.0.4",
     "jsonwebtoken": "^9.0.2",
     "kerberos": "latest",
     "lucide-react": "^0.454.0",

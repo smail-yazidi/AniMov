@@ -1,39 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/mongodb";
-import { UserModel } from "@/models/User"; // Make sure this matches your export
-import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server"
+import connectToDatabase from "@/lib/mongodb"
+import { UserModel } from "@/models/User"
+import bcrypt from "bcryptjs"
+import { createSession } from "@/lib/session-store"
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("Request received");
+    const { email, password } = await req.json()
 
-    const bodyText = await req.text();
-    console.log("Raw body:", bodyText);
-
-    const { email, password } = JSON.parse(bodyText);
-    console.log("Parsed email:", email);
-    console.log("Parsed password:", password);
-
-    await connectToDatabase();
-
-    const user = await UserModel.findOne({ email });
-    console.log("User found:", !!user);
+    await connectToDatabase()
+    const user = await UserModel.findOne({ email })
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log("Password valid?", isPasswordValid);
-
+    const isPasswordValid = await bcrypt.compare(password, user.password)
     if (!isPasswordValid) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    return NextResponse.json({ message: "Signed in successfully" }, { status: 200 });
+    // Create a session and return session ID
+    const sessionId = createSession(user._id.toString())
+
+    return NextResponse.json({
+      message: "Signed in successfully",
+      sessionId,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar,
+      },
+    })
   } catch (error) {
-    console.error("Signin error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Signin error:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
-

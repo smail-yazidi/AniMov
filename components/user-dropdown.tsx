@@ -37,27 +37,31 @@ export function UserDropdown({ className }: UserDropdownProps) {
   const { toast } = useToast()
 
   // Check for logged-in user on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/check", {
-          credentials: "include",
-        })
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId")
+      if (!sessionId) return
 
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData.user)
-        } else {
-          setUser(null)
-        }
-      } catch (error) {
-        console.error("Error checking auth status:", error)
+      const res = await fetch("/api/auth/session", {
+        method: "GET",
+        headers: { authorization: sessionId },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data.user)
+      } else {
         setUser(null)
       }
+    } catch (error) {
+      console.error("Error checking auth status:", error)
+      setUser(null)
     }
+  }
 
-    checkAuth()
-  }, [])
+  checkAuth()
+}, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -93,33 +97,17 @@ export function UserDropdown({ className }: UserDropdownProps) {
     }
   }, [isOpen])
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/signout", {
-        method: "POST",
-        credentials: "include",
-      })
+ const handleLogout = () => {
+  localStorage.removeItem("sessionId")
+  setUser(null)
+  toast({
+    title: "Logged out",
+    description: "You have been successfully logged out.",
+  })
+  router.push("/auth/signin")
+  setIsOpen(false)
+}
 
-      if (response.ok) {
-        setUser(null)
-        toast({
-          title: "Logged out",
-          description: "You have been successfully logged out.",
-        })
-        router.push("/auth/signin")
-      } else {
-        throw new Error("Logout failed")
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log out. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsOpen(false)
-    }
-  }
 
   if (!user) {
     return (
