@@ -1,5 +1,5 @@
 "use client"
-import { useToast } from "@/components/ui/use-toast"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "@/components/ui/use-toast"; // Or sometimes "@/components/ui/toast"
 import {
   Star,
   Heart,
@@ -249,51 +250,49 @@ export default function ItemDetailPage() {
   const handleAddToWatchlist = () => {
     setIsInWatchlist(!isInWatchlist)
   }
-  const handleAddToFavorites = async () => {
-    if (!item || !item.id || !type) return
 
-    try {
-      const userId = localStorage.getItem("sessionId") // Get userId from localStorage (assuming sessionId is userId)
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "You need to be logged in to add to favorites.",
-          variant: "destructive",
-        })
-        return
-      }
+const handleAddToFavorites = async () => {
+  if (!item || !item.id || !type) return
 
-      const res = await fetch("/api/favorites", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // No need for Authorization header if userId is in the body and not used for authentication here
-        },
-        body: JSON.stringify({
-          userId: userId, // <-- Add userId here
-          contentId: item.id.toString(),
-          contentType: type,
-        }),
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || "Failed to add to favorites")
-      }
-
-      // const newFavorite = await res.json() // This variable is not used
-      toast({ title: "Added to favorites!", description: `${item.title || item.name} has been added to your favorites.` })
-      setIsInFavorites(true)
-    } catch (error) {
-      console.error("Error adding to favorites:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to favorites.",
-        variant: "destructive",
-      })
+  try {
+    const sessionId = localStorage.getItem("sessionId")
+    if (!sessionId) {
+      throw new Error("No session found. Please log in.") // More user-friendly message
     }
-  }
 
+    const res = await fetch("/api/favorites", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Crucially, send the sessionId in the Authorization header
+        Authorization: `Bearer ${sessionId}`,
+      },
+      body: JSON.stringify({
+        // DO NOT send userId here. The backend will derive it from the session.
+        contentId: item.id.toString(),
+        contentType: type,
+      }),
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json()
+      // Log the full server response for debugging
+      console.error("Server error response on add to favorites:", errorData)
+      throw new Error(errorData.error || "Failed to add to favorites")
+    }
+
+    const newFavorite = await res.json()
+    toast({ title: "Added to favorites!" })
+    setIsInFavorites(true)
+  } catch (error) {
+    console.error("Error adding to favorites:", error)
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to add to favorites",
+      variant: "destructive",
+    })
+  }
+}
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
       console.log("Submit comment:", { rating: userRating, comment: userComment })
