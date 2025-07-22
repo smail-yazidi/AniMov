@@ -174,7 +174,15 @@ useEffect(() => {
 
 }, [item, type]); // Dependencies remain item and type
 
+// Helper to check if content is for reading
+const isReadingContentType = (contentType) => {
+  return contentType === 'book' || contentType === 'manga';
+};
 
+// Helper to check if content is for watching
+const isWatchingContentType = (contentType) => {
+  return contentType === 'movie' || contentType === 'tv' || contentType === 'anime';
+};
   useEffect(() => {
     const loadItemData = async () => {
       try {
@@ -682,52 +690,52 @@ const handleAddToWatchlist = async () => {
                 <p className="text-gray-300 text-lg leading-relaxed mb-6">{item.overview || item.synopsis}</p>
                 {isBook && <p className="text-gray-300 text-lg leading-relaxed mb-6">{getBookDescription(item)}</p>}
 
-          {/* Action Buttons */}
+{/* Action Buttons */}
 <div className="flex flex-wrap gap-4">
 
-    {/* Favorites Button (always present, as it's a general favorite) */}
+  {/* Favorites Button (general favorite, applies to any content type) */}
+  <Button
+    size="lg"
+    variant="outline"
+    className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
+    onClick={handleAddToFavorites}
+  >
+    <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
+    {isInFavorites ? "In Favorites" : "Add to Favorites"}
+  </Button>
+
+  {/* Watchlist Button (conditionally rendered for movies, TV series, anime) */}
+  {isWatchingContentType(type) && (
     <Button
       size="lg"
       variant="outline"
-      className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
-      onClick={handleAddToFavorites}
+      className={`${isInWatchlist ? "bg-blue-600 text-white" : "bg-transparent text-white border-white/30"}`}
+      onClick={handleAddToWatchlist}
     >
-      <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
-      {isInFavorites ? "In Favorites" : "Add to Favorites"}
+      <Eye className="h-5 w-5 mr-2" /> {/* Clear icon for watching */}
+      {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
     </Button>
+  )}
 
-    {/* Watchlist Button for Movies, TV Series, Anime */}
-    {isWatchingContentType(type) && (
-      <Button
-        size="lg"
-        variant="outline"
-        className={`${isInWatchlist ? "bg-blue-600 text-white" : "bg-transparent text-white border-white/30"}`}
-        onClick={handleAddToWatchlist}
-      >
-        <Eye className="h-5 w-5 mr-2" /> {/* Icon for watching */}
-        {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
-      </Button>
-    )}
-
-    {/* Reading List Button for Manga and Books */}
-    {isReadingContentType(type) && (
-      <Button
-        size="lg"
-        variant="outline"
-        className={`${isInReadingList ? "bg-orange-600 text-white" : "bg-transparent text-white border-white/30"}`}
-        onClick={handleAddToReadingList}
-      >
-        <BookOpen className="h-5 w-5 mr-2" /> {/* Icon for reading */}
-        {isInReadingList ? "In Reading List" : "Add to Reading List"}
-      </Button>
-    )}
-
-    {/* Share Button (always present) */}
-    <Button size="lg" variant="outline" className="bg-transparent text-white border-white/30">
-      <Share2 className="h-5 w-5 mr-2" />
-      Share
+  {/* Reading List Button (conditionally rendered for books and manga) */}
+  {isReadingContentType(type) && (
+    <Button
+      size="lg"
+      variant="outline"
+      className={`${isInReadingList ? "bg-orange-600 text-white" : "bg-transparent text-white border-white/30"}`}
+      onClick={handleAddToReadingList}
+    >
+      <BookOpen className="h-5 w-5 mr-2" /> {/* Clear icon for reading */}
+      {isInReadingList ? "In Reading List" : "Add to Reading List"}
     </Button>
-  </div>
+  )}
+
+  {/* Share Button (always present) */}
+  <Button size="lg" variant="outline" className="bg-transparent text-white border-white/30">
+    <Share2 className="h-5 w-5 mr-2" />
+    Share
+  </Button>
+</div>
               </div>
             </div>
           </div>
