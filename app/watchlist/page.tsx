@@ -15,7 +15,7 @@ import {
   CheckCircle, // For 'completed'
   PauseCircle, // For 'on-hold'
   XCircle, // For 'dropped'
-  Clock, // For 'plan-to-watch'
+  Clock,Search, // For 'plan-to-watch'
 } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { toast } from "@/components/ui/use-toast";
