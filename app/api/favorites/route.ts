@@ -22,10 +22,12 @@ export async function GET(req: Request) {
   }
 }
 
+// ... (existing imports)
+
 export async function POST(req: Request) {
   await connectToDatabase()
   try {
-    const { userId, contentId, contentType } = await req.json()
+    const { userId, contentId, contentType } = await req.json() // userId is correctly destructured here
 
     if (!userId || !contentId || !contentType) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -55,6 +57,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
+
+// ... (existing GET and DELETE functions)
 
 export async function DELETE(req: Request) {
   await connectToDatabase()

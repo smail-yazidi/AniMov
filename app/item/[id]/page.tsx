@@ -1,5 +1,5 @@
 "use client"
-
+import { useToast } from "@/components/ui/use-toast"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -253,18 +253,24 @@ export default function ItemDetailPage() {
     if (!item || !item.id || !type) return
 
     try {
-      const sessionId = localStorage.getItem("sessionId")
-      if (!sessionId) {
-        throw new Error("No session found")
+      const userId = localStorage.getItem("sessionId") // Get userId from localStorage (assuming sessionId is userId)
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "You need to be logged in to add to favorites.",
+          variant: "destructive",
+        })
+        return
       }
 
       const res = await fetch("/api/favorites", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionId}`,
+          // No need for Authorization header if userId is in the body and not used for authentication here
         },
         body: JSON.stringify({
+          userId: userId, // <-- Add userId here
           contentId: item.id.toString(),
           contentType: type,
         }),
@@ -275,15 +281,15 @@ export default function ItemDetailPage() {
         throw new Error(errorData.error || "Failed to add to favorites")
       }
 
-      const newFavorite = await res.json()
-      toast({ title: "Added to favorites!" })
+      // const newFavorite = await res.json() // This variable is not used
+      toast({ title: "Added to favorites!", description: `${item.title || item.name} has been added to your favorites.` })
       setIsInFavorites(true)
     } catch (error) {
       console.error("Error adding to favorites:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to favorites",
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "Failed to add to favorites.",
+        variant: "destructive",
       })
     }
   }
