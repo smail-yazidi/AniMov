@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session-store"; // Adjust path if different
 import connectToDatabase from "@/lib/mongodb"; // Adjust path if different
-import { ReadlistItemModel } from "@/models/ReadlistItem"; // Adjust path if different
+import { ReadingListItemModel } from "@/models/ReadlistItem"; // Adjust path if different
 import mongoose from "mongoose"; // Import mongoose for ObjectId
 
 export async function GET(req: NextRequest) {
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   await connectToDatabase();
 
   try {
-    const exists = await ReadlistItemModel.findOne({
+    const exists = await ReadingListItemModel.findOne({
       userId: new mongoose.Types.ObjectId(session.userId), // Convert userId to ObjectId
       contentId,
       contentType,

@@ -1,4 +1,5 @@
 "use client"
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -74,6 +75,9 @@ export default function ItemDetailPage() {
   const [isInWatchlist, setIsInWatchlist] = useState(false)
   const [isInFavorites, setIsInFavorites] = useState(false)
   const [isInReadingList, setIsInReadingList] = useState(false)
+  const router = useRouter();
+
+
   const itemId = params.id as string
   const [type, id] = itemId.split("-")
 useEffect(() => {
@@ -568,11 +572,10 @@ const handleAddToWatchlist = async () => {
         <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="ghost" size="icon" className="text-white">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
+             // ... inside your JSX
+<Button variant="ghost" size="icon" className="text-white" onClick={() => router.back()}>
+  <ArrowLeft className="h-5 w-5" />
+</Button>
               <Skeleton className="h-6 w-48 bg-white/20" />
             </div>
           </div>
@@ -659,11 +662,10 @@ const handleAddToWatchlist = async () => {
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="text-white">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+           // ... inside your JSX
+<Button variant="ghost" size="icon" className="text-white" onClick={() => router.back()}>
+  <ArrowLeft className="h-5 w-5" />
+</Button>
             <div className="flex items-center gap-2">
               <TypeIcon className="h-6 w-6 text-white" />
               <h1 className="text-xl font-bold text-white">{title}</h1>
