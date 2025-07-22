@@ -1,4 +1,5 @@
-"use client"
+// Imports - ensure these paths are correct in your project
+"use client" // This must be at the very top of the file
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -6,96 +7,281 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Star, Calendar, Trash2, Filter, Search } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
+import { toast } from "@/components/ui/use-toast" // Assuming shadcn/ui toast
 
-interface FavoriteItem {
-  id: string
-  title: string
-  type: "movie" | "series" | "anime" | "manga" | "book"
-  poster: string
-  rating: number
-  year: number
-  addedDate: string
-  genres: string[]
+// API Imports - Adjust paths if different in your project
+import { tmdbApi, type Movie, type TVShow, getImageUrl } from "@/lib/tmdb-api"
+import { jikanApi, type JikanAnime, type JikanManga } from "@/lib/jikan-api"
+import { googleBooksApi, type GoogleBook, getBookImageUrl } from "@/lib/google-books-api"
+
+// Interface for the raw favorite item as stored in your database
+interface RawFavoriteItem {
+  _id: string; // MongoDB ObjectId as a string
+  userId: string; // userId as a string
+  contentId: string;
+  contentType: "movie" | "tv" | "anime" | "manga" | "book";
+  createdAt: string; // ISO date string
+}
+
+// Interface for the favorite item with detailed information, used for display
+interface DisplayFavoriteItem {
+  _id: string; // The ID of the favorite record itself from MongoDB
+  id: string; // The content ID (e.g., TMDB movie ID, Jikan anime ID)
+  title: string;
+  type: "movie" | "tv" | "anime" | "manga" | "book";
+  poster: string;
+  rating: number;
+  year: number;
+  addedDate: string; // Date when the item was added to favorites
+  genres: string[];
 }
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([])
-  const [selectedType, setSelectedType] = useState<string>("all")
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<DisplayFavoriteItem[]>([]);
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchFavorites() {
+    async function fetchFavoritesAndDetails() {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true);
+        setError(null);
 
-        // Replace the URL with your actual API endpoint
-        const response = await fetch("/api/favorites")
-        if (!response.ok) {
-          throw new Error(`Failed to fetch favorites: ${response.statusText}`)
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          throw new Error("No session found. Please log in.");
         }
-        const data: FavoriteItem[] = await response.json()
-        setFavorites(data)
+
+        // 1. Fetch raw favorite items (contentId, contentType, _id) from your backend
+        const response = await fetch("/api/favorites", {
+          headers: {
+            Authorization: `Bearer ${sessionId}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error fetching raw favorites:", errorData);
+          throw new Error(errorData.error || `Failed to fetch favorite IDs: ${response.statusText}`);
+        }
+        const rawFavorites: RawFavoriteItem[] = await response.json();
+        console.log("Fetched raw favorites from backend:", rawFavorites);
+
+        // 2. Fetch detailed information for each favorite item from external APIs concurrently
+        const detailedFavoritePromises = rawFavorites.map(async (fav: RawFavoriteItem) => {
+          let itemDetails: DisplayFavoriteItem | null = null;
+
+          try {
+            switch (fav.contentType) {
+              case "movie":
+                const movieData = await tmdbApi.getMovieById(fav.contentId);
+                if (movieData) {
+                  itemDetails = {
+                    _id: fav._id,
+                    id: movieData.id.toString(),
+                    title: movieData.title,
+                    type: "movie",
+                    poster: getImageUrl(movieData.poster_path, "w500"),
+                    rating: movieData.vote_average,
+                    year: movieData.release_date ? parseInt(movieData.release_date.substring(0, 4)) : 0,
+                    addedDate: fav.createdAt,
+                    genres: movieData.genres ? movieData.genres.map(g => g.name) : [],
+                  };
+                }
+                break;
+              case "tv":
+                const tvData = await tmdbApi.getTVShowById(fav.contentId);
+                if (tvData) {
+                  itemDetails = {
+                    _id: fav._id,
+                    id: tvData.id.toString(),
+                    title: tvData.name,
+                    type: "tv",
+                    poster: getImageUrl(tvData.poster_path, "w500"),
+                    rating: tvData.vote_average,
+                    year: tvData.first_air_date ? parseInt(tvData.first_air_date.substring(0, 4)) : 0,
+                    addedDate: fav.createdAt,
+                    genres: tvData.genres ? tvData.genres.map(g => g.name) : [],
+                  };
+                }
+                break;
+              case "anime":
+                const animeData = await jikanApi.getAnimeById(fav.contentId);
+                if (animeData) {
+                  itemDetails = {
+                    _id: fav._id,
+                    id: animeData.mal_id.toString(),
+                    title: animeData.title,
+                    type: "anime",
+                    poster: animeData.images?.webp?.image_url || "/placeholder.svg",
+                    rating: animeData.score || 0,
+                    year: animeData.aired?.from ? new Date(animeData.aired.from).getFullYear() : 0,
+                    addedDate: fav.createdAt,
+                    genres: animeData.genres ? animeData.genres.map(g => g.name) : [],
+                  };
+                }
+                break;
+              case "manga":
+                const mangaData = await jikanApi.getMangaById(fav.contentId);
+                if (mangaData) {
+                  itemDetails = {
+                    _id: fav._id,
+                    id: mangaData.mal_id.toString(),
+                    title: mangaData.title,
+                    type: "manga",
+                    poster: mangaData.images?.webp?.image_url || "/placeholder.svg",
+                    rating: mangaData.score || 0,
+                    year: mangaData.published?.from ? new Date(mangaData.published.from).getFullYear() : 0,
+                    addedDate: fav.createdAt,
+                    genres: mangaData.genres ? mangaData.genres.map(g => g.name) : [],
+                  };
+                }
+                break;
+              case "book":
+                const bookData = await googleBooksApi.getBookById(fav.contentId);
+                if (bookData) {
+                  itemDetails = {
+                    _id: fav._id,
+                    id: bookData.id.toString(),
+                    title: bookData.volumeInfo?.title || "No Title",
+                    type: "book",
+                    poster: getBookImageUrl(bookData.volumeInfo?.imageLinks) || "/placeholder.svg",
+                    rating: bookData.volumeInfo?.averageRating || 0, // Google Books has averageRating
+                    year: bookData.volumeInfo?.publishedDate ? parseInt(bookData.volumeInfo.publishedDate.substring(0, 4)) : 0,
+                    addedDate: fav.createdAt,
+                    genres: bookData.volumeInfo?.categories || [],
+                  };
+                }
+                break;
+              default:
+                console.warn(`Unknown content type: ${fav.contentType} for contentId: ${fav.contentId}`);
+                break;
+            }
+          } catch (detailError) {
+            console.error(`Failed to fetch details for ${fav.contentType} with ID ${fav.contentId}:`, detailError);
+            // Return null to filter out this item later if its details couldn't be fetched
+            return null;
+          }
+
+          return itemDetails;
+        });
+
+        // Wait for all detail fetches to complete. Use Promise.allSettled to handle individual failures.
+        const results = await Promise.allSettled(detailedFavoritePromises);
+        const fetchedFavorites: DisplayFavoriteItem[] = results
+          .filter(result => result.status === 'fulfilled' && result.value !== null)
+          .map(result => (result as PromiseFulfilledResult<DisplayFavoriteItem>).value);
+
+        setFavorites(fetchedFavorites);
+        console.log("Processed favorites for display:", fetchedFavorites);
+
       } catch (err: any) {
-        setError(err.message || "Something went wrong")
+        console.error("Error in fetchFavoritesAndDetails:", err);
+        setError(err.message || "Failed to load favorites.");
+        toast({
+          title: "Error",
+          description: err.message || "Failed to load favorites. Please try again.",
+          variant: "destructive",
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchFavorites()
-  }, [])
+    fetchFavoritesAndDetails();
+  }, []); // Empty dependency array means this runs once on component mount
+
+  // Function to remove a favorite item from both frontend state and backend
+  const removeFavorite = async (favoriteRecordId: string, contentId: string, contentType: DisplayFavoriteItem['type']) => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Cannot remove favorite. Please log in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/favorites", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          _id: favoriteRecordId, // Send the MongoDB _id for specific deletion
+          // contentId and contentType are not strictly needed by the backend DELETE if it uses _id,
+          // but can be kept for extra verification or logging if desired.
+          // For now, only _id is used in the backend DELETE handler provided previously.
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Server error response on remove favorite:", errorData);
+        throw new Error(errorData.error || "Failed to remove favorite");
+      }
+
+      // If successful, update the local state to remove the item instantly
+      setFavorites((prev) => prev.filter((item) => item._id !== favoriteRecordId));
+      toast({ title: "Removed from favorites!" });
+    } catch (err: any) {
+      console.error("Error removing favorite:", err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to remove favorite.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredFavorites = favorites.filter(
     (item) => selectedType === "all" || item.type === selectedType
-  )
-
-  const removeFavorite = (id: string) => {
-    setFavorites((prev) => prev.filter((item) => item.id !== id))
-    // Optionally call an API to remove favorite from backend here
-  }
+  );
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "movie":
-        return "bg-blue-600"
-      case "series":
-        return "bg-green-600"
+        return "bg-blue-600";
+      case "tv":
+        return "bg-green-600";
       case "anime":
-        return "bg-purple-600"
+        return "bg-purple-600";
       case "manga":
-        return "bg-orange-600"
+        return "bg-orange-600";
       case "book":
-        return "bg-red-600"
+        return "bg-red-600";
       default:
-        return "bg-gray-600"
+        return "bg-gray-600";
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "movie":
-        return "Movie"
-      case "series":
-        return "TV Series"
+        return "Movie";
+      case "tv":
+        return "TV Series"; // Display as "TV Series" even if backend uses "tv"
       case "anime":
-        return "Anime"
+        return "Anime";
       case "manga":
-        return "Manga"
+        return "Manga";
       case "book":
-        return "Book"
+        return "Book";
       default:
-        return type
+        return type;
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
         Loading favorites...
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -103,14 +289,14 @@ export default function FavoritesPage() {
       <div className="min-h-screen flex items-center justify-center text-red-500">
         Error: {error}
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
       <Sidebar />
 
-      {/* Header */}
+      {/* Main App Header (usually sticky) */}
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-30">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -127,9 +313,9 @@ export default function FavoritesPage() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content Area for Favorites Page */}
       <div className="relative z-10">
-        {/* Header */}
+        {/* Favorites Section Header with Filtering */}
         <header className="bg-black/20 backdrop-blur-md border-b border-white/10 pt-20 pb-6">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-6">
@@ -145,11 +331,11 @@ export default function FavoritesPage() {
               </Badge>
             </div>
 
-            {/* Filter */}
+            {/* Filter Buttons */}
             <div className="flex items-center gap-4">
               <Filter className="h-5 w-5 text-gray-400" />
               <div className="flex gap-2">
-                {["all", "movie", "series", "anime", "manga", "book"].map((type) => (
+                {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
                   <Button
                     key={type}
                     variant={selectedType === type ? "default" : "outline"}
@@ -169,6 +355,7 @@ export default function FavoritesPage() {
           </div>
         </header>
 
+        {/* Favorites Grid */}
         <div className="container mx-auto px-4 py-8">
           {filteredFavorites.length === 0 ? (
             <div className="text-center py-12">
@@ -180,13 +367,13 @@ export default function FavoritesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredFavorites.map((item) => (
                 <Card
-                  key={item.id}
+                  key={item._id} // Use the unique MongoDB _id for the key
                   className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20 transition-all duration-300 group"
                 >
                   <CardContent className="p-0">
                     <div className="relative overflow-hidden rounded-t-lg">
                       <img
-                        src={item.poster || "/placeholder.svg"}
+                        src={item.poster || "/placeholder.svg"} // Fallback to a placeholder
                         alt={item.title}
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -205,7 +392,7 @@ export default function FavoritesPage() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => removeFavorite(item.id)}
+                          onClick={() => removeFavorite(item._id, item.id, item.type)} // Pass necessary IDs for removal
                           className="bg-red-600 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -237,5 +424,5 @@ export default function FavoritesPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
