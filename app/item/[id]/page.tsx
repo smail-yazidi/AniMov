@@ -423,7 +423,7 @@ const handleAddToWatchlist = async () => {
         Authorization: `Bearer ${sessionId}`,
       },
       body: JSON.stringify({
-          contentId: item.id.toString(),
+        contentId: contentId, // Use the correct, universal contentId here
         contentType: type,
       }),
     });
@@ -449,6 +449,10 @@ const handleAddToWatchlist = async () => {
 
   const handleAddToFavorites = async () => {
     if (!item || !item.id || !type) return
+ console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Content ID:", contentId); // Log the correct ID
+  console.log("Type:", type);
 
     try {
       const sessionId = localStorage.getItem("sessionId")
