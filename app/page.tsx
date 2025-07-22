@@ -170,14 +170,15 @@ export default function HomePage() {
 
       {/* Search Modal */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-{/* 
+
 {/*       {/* Quick Navigation Buttons with Counters */}
-      <section className="container mx-auto px-4 py-6">
+
+{/*       <section className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/watchlist" className="flex-1 max-w-sm">
             <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 group cursor-pointer">
               <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
+              
                 <div className="absolute top-3 right-3">
                   <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
                     {userStats.watchlistCount}
@@ -195,7 +196,7 @@ export default function HomePage() {
           <Link href="/favorites" className="flex-1 max-w-sm">
             <Card className="bg-gradient-to-r from-pink-600 to-pink-700 border-0 hover:from-pink-700 hover:to-pink-800 transition-all duration-300 group cursor-pointer">
               <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
+    
                 <div className="absolute top-3 right-3">
                   <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
                     {userStats.favoritesCount}
@@ -213,7 +214,7 @@ export default function HomePage() {
           <Link href="/friends" className="flex-1 max-w-sm">
             <Card className="bg-gradient-to-r from-green-600 to-green-700 border-0 hover:from-green-700 hover:to-green-800 transition-all duration-300 group cursor-pointer">
               <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
+     
                 <div className="absolute top-3 right-3">
                   <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">{userStats.friendsCount}</Badge>
                 </div>
@@ -226,7 +227,7 @@ export default function HomePage() {
             </Card>
           </Link>
         </div>
-      </section> */}
+      </section>  */}
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12">
