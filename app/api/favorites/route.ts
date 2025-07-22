@@ -125,19 +125,17 @@ export async function DELETE(req: Request) {
 
     // Extract the _id of the favorite item record from the request body
     const body = await req.json();
-    const { _id } = body;
+   const { contentId, contentType } = body;
+if (!contentId || !contentType) {
+  return NextResponse.json({ error: "Missing contentId or contentType" }, { status: 400 });
+}
 
-    if (!_id) {
-      console.warn("Missing _id in favorite remove request body.");
-      return NextResponse.json({ error: "Missing favorite item ID for deletion" }, { status: 400 });
-    }
-    console.log(`Attempting to delete favorite item with _id: ${_id}`);
+const deleted = await FavoriteItemModel.findOneAndDelete({
+  contentId,
+  contentType,
+  userId: new mongoose.Types.ObjectId(userId),
+});
 
-    // Find and delete the favorite item, ensuring it belongs to the current user
-    const deleted = await FavoriteItemModel.findOneAndDelete({
-      _id: new mongoose.Types.ObjectId(_id), // Convert string _id to MongoDB ObjectId
-      userId: new mongoose.Types.ObjectId(userId), // Ensure the favorite belongs to the current user
-    });
 
     if (!deleted) {
       console.warn(`Favorite item with _id ${_id} not found or does not belong to user ${userId}.`);
@@ -157,4 +155,4 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-// ... GET and DELETE handlers (add similar verbose logging for debugging)
+
