@@ -339,7 +339,7 @@ const handleAddToReadingList = async () => {
       throw new Error("No session found. Please log in to add to your reading list.");
     }
 
-    const res = await fetch("/api/readinglist", { // Target your reading list API endpoint
+    const res = await fetch("/api/readlist", { // Target your reading list API endpoint
       method: "POST",
       headers: {
         "Content-Type": "application/json",
