@@ -247,52 +247,112 @@ export default function ItemDetailPage() {
 
   const TypeIcon = getTypeIcon(type)
 
-  const handleAddToWatchlist = () => {
-    setIsInWatchlist(!isInWatchlist)
-  }
+  // This is the `handleAddToWatchlist` function you asked for,
+  // typically used from a detail page to add an item to the watchlist.
+  // It takes the actual content details, not just the _id of a watchlist record.
+  const handleAddToWatchlist = async (
+    contentId: string,
+    contentType: DisplayWatchlistItem["type"],
+    initialStatus: RawWatchlistItem["status"] = "plan-to-watch",
+    initialProgress: string = ""
+  ) => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Please log in to add to watchlist.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-const handleAddToFavorites = async () => {
-  if (!item || !item.id || !type) return
+      const response = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          contentId,
+          contentType,
+          status: initialStatus,
+          progress: initialProgress,
+        }),
+      });
 
-  try {
-    const sessionId = localStorage.getItem("sessionId")
-    if (!sessionId) {
-      throw new Error("No session found. Please log in.") // More user-friendly message
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to add ${contentType} to watchlist`);
+      }
+
+      const responseData = await response.json();
+      if (response.status === 200 && responseData.message === "Item already in watchlist") {
+        toast({
+          title: "Already in Watchlist",
+          description: "This item is already in your watchlist.",
+        });
+      } else {
+        toast({
+          title: "Added to Watchlist!",
+          description: `${contentType === 'movie' ? 'Movie' : contentType === 'tv' ? 'TV Series' : 'Anime'} added successfully.`,
+        });
+        // Re-fetch the watchlist to update the displayed list
+        fetchWatchlistAndDetails();
+      }
+    } catch (err: any) {
+      console.error("Error adding to watchlist:", err);
+      toast({
+        title: "Error",
+        description: err.message || `Failed to add ${contentType} to watchlist.`,
+        variant: "destructive",
+      });
     }
+  };
 
-    const res = await fetch("/api/favorites", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Crucially, send the sessionId in the Authorization header
-        Authorization: `Bearer ${sessionId}`,
-      },
-      body: JSON.stringify({
-        // DO NOT send userId here. The backend will derive it from the session.
-        contentId: item.id.toString(),
-        contentType: type,
-      }),
-    })
 
-    if (!res.ok) {
-      const errorData = await res.json()
-      // Log the full server response for debugging
-      console.error("Server error response on add to favorites:", errorData)
-      throw new Error(errorData.error || "Failed to add to favorites")
+  const handleAddToFavorites = async () => {
+    if (!item || !item.id || !type) return
+
+    try {
+      const sessionId = localStorage.getItem("sessionId")
+      if (!sessionId) {
+        throw new Error("No session found. Please log in.") // More user-friendly message
+      }
+
+      const res = await fetch("/api/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Crucially, send the sessionId in the Authorization header
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          // DO NOT send userId here. The backend will derive it from the session.
+          contentId: item.id.toString(),
+          contentType: type,
+        }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        // Log the full server response for debugging
+        console.error("Server error response on add to favorites:", errorData)
+        throw new Error(errorData.error || "Failed to add to favorites")
+      }
+
+      const newFavorite = await res.json()
+      toast({ title: "Added to favorites!" })
+      setIsInFavorites(true)
+    } catch (error) {
+      console.error("Error adding to favorites:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add to favorites",
+        variant: "destructive",
+      })
     }
-
-    const newFavorite = await res.json()
-    toast({ title: "Added to favorites!" })
-    setIsInFavorites(true)
-  } catch (error) {
-    console.error("Error adding to favorites:", error)
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to add to favorites",
-      variant: "destructive",
-    })
   }
-}
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
       console.log("Submit comment:", { rating: userRating, comment: userComment })
