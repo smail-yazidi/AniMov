@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "@/components/ui/use-toast"; // Or sometimes "@/components/ui/toast"
 import {
   Star,
-  Heart,BookOpen,
+  Heart,BookOpen,Eye,
   Clock,
   ArrowLeft,
   Play,
@@ -685,47 +685,49 @@ const handleAddToWatchlist = async () => {
           {/* Action Buttons */}
 <div className="flex flex-wrap gap-4">
 
-  <Button
-    size="lg"
-    variant="outline"
-    className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
-    onClick={handleAddToFavorites}
-  >
-    <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
-    {isInFavorites ? "In Favorites" : "Add to Favorites"}
-  </Button>
-
-  {/* Watchlist Button (for movies/TV/anime) */}
-  {type !== 'book' && ( // Only show Watchlist button if it's not a book
+    {/* Favorites Button (always present, as it's a general favorite) */}
     <Button
       size="lg"
       variant="outline"
-      className={`${isInWatchlist ? "bg-blue-600 text-white" : "bg-transparent text-white border-white/30"}`}
-      onClick={handleAddToWatchlist}
+      className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
+      onClick={handleAddToFavorites}
     >
-      <Eye className="h-5 w-5 mr-2" /> {/* Changed icon to Eye for watching */}
-      {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
+      <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
+      {isInFavorites ? "In Favorites" : "Add to Favorites"}
     </Button>
-  )}
 
-  {/* Reading List Button (for books) */}
-  {type === 'book' && ( // Only show Reading List button if it's a book
-    <Button
-      size="lg"
-      variant="outline"
-      className={`${isInReadingList ? "bg-orange-600 text-white" : "bg-transparent text-white border-white/30"}`}
-      onClick={handleAddToReadingList} // Assuming you have this function
-    >
-      <BookOpen className="h-5 w-5 mr-2" /> {/* Icon for reading list */}
-      {isInReadingList ? "In Reading List" : "Add to Reading List"}
+    {/* Watchlist Button for Movies, TV Series, Anime */}
+    {isWatchingContentType(type) && (
+      <Button
+        size="lg"
+        variant="outline"
+        className={`${isInWatchlist ? "bg-blue-600 text-white" : "bg-transparent text-white border-white/30"}`}
+        onClick={handleAddToWatchlist}
+      >
+        <Eye className="h-5 w-5 mr-2" /> {/* Icon for watching */}
+        {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
+      </Button>
+    )}
+
+    {/* Reading List Button for Manga and Books */}
+    {isReadingContentType(type) && (
+      <Button
+        size="lg"
+        variant="outline"
+        className={`${isInReadingList ? "bg-orange-600 text-white" : "bg-transparent text-white border-white/30"}`}
+        onClick={handleAddToReadingList}
+      >
+        <BookOpen className="h-5 w-5 mr-2" /> {/* Icon for reading */}
+        {isInReadingList ? "In Reading List" : "Add to Reading List"}
+      </Button>
+    )}
+
+    {/* Share Button (always present) */}
+    <Button size="lg" variant="outline" className="bg-transparent text-white border-white/30">
+      <Share2 className="h-5 w-5 mr-2" />
+      Share
     </Button>
-  )}
-
-  <Button size="lg" variant="outline" className="bg-transparent text-white border-white/30">
-    <Share2 className="h-5 w-5 mr-2" />
-    Share
-  </Button>
-</div>
+  </div>
               </div>
             </div>
           </div>
