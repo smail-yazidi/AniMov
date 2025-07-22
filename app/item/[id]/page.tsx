@@ -330,15 +330,16 @@ const isWatchingContentType = (contentType) => {
   const TypeIcon = getTypeIcon(type)
 const handleAddToReadingList = async () => {
   // Ensure 'item' and 'type' are available and valid before proceeding
+    console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Item ID:", item.id);
+  console.log("Type:", type);
+
    if (!item || !item.id || !type) {
     console.log("Missing item, item.id, or type. Aborting.");
     return; // Ensure item and type are available
   }
 
-  console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Item ID:", item.id);
-  console.log("Type:", type);
 
   try {
     const sessionId = localStorage.getItem("sessionId");
@@ -386,16 +387,17 @@ const handleAddToReadingList = async () => {
   // It takes the actual content details, not just the _id of a watchlist record.
 const handleAddToWatchlist = async () => {
   console.log("clicked");
-
-  if (!item || !item.id || !type) {
-    console.log("Missing item, item.id, or type. Aborting.");
-    return; // Ensure item and type are available
-  }
-
   console.log("Info exists. Details:");
   console.log("Item:", item);
   console.log("Item ID:", item.id);
   console.log("Type:", type);
+  if (!item || !item.id || !type) {
+
+    console.log("Missing item, item.id, or type. Aborting.");
+    return; // Ensure item and type are available
+  }
+
+
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
