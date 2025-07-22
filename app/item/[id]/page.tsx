@@ -171,8 +171,7 @@ useEffect(() => {
 
 }, [item, type]); // Dependencies remain item and type/ Dependencies remain item and type
 const getContentId = (contentItem, contentType) => {
-  if (!contentItem) return null; // Handle null item gracefully
-
+  if (!contentItem) return null;
   // For TMDB movies/TV and Google Books, the ID is 'id'
   if (contentType === 'movie' || contentType === 'tv' || contentType === 'book') {
     return contentItem.id?.toString();
@@ -181,7 +180,7 @@ const getContentId = (contentItem, contentType) => {
   if (contentType === 'anime' || contentType === 'manga') {
     return contentItem.mal_id?.toString();
   }
-  return null; // Fallback if type is unrecognized or ID is missing
+  return null;
 };
 // Helper to check if content is for reading
 const isReadingContentType = (contentType) => {
@@ -447,53 +446,61 @@ const handleAddToWatchlist = async () => {
   }
 };
 
-  const handleAddToFavorites = async () => {
- console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Content ID:", contentId); // Log the correct ID
-  console.log("Type:", type);
-    if (!item || !item.id || !type) return
+ 
+const handleAddToFavorites = async () => {
+  // Define contentId using your helper function here
+  const contentId = getContentId(item, type);
 
-
-    try {
-      const sessionId = localStorage.getItem("sessionId")
-      if (!sessionId) {
-        throw new Error("No session found. Please log in.") // More user-friendly message
-      }
-
-      const res = await fetch("/api/favorites", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Crucially, send the sessionId in the Authorization header
-          Authorization: `Bearer ${sessionId}`,
-        },
-        body: JSON.stringify({
-          // DO NOT send userId here. The backend will derive it from the session.
-          contentId: item.id.toString(),
-          contentType: type,
-        }),
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        // Log the full server response for debugging
-        console.error("Server error response on add to favorites:", errorData)
-        throw new Error(errorData.error || "Failed to add to favorites")
-      }
-
-      const newFavorite = await res.json()
-      toast({ title: "Added to favorites!" })
-      setIsInFavorites(true)
-    } catch (error) {
-      console.error("Error adding to favorites:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to favorites",
-        variant: "destructive",
-      })
-    }
+  // Updated check: use the derived contentId
+  if (!item || !contentId || !type) {
+    console.log("Missing item, content ID, or type for favorites. Aborting.");
+    return;
   }
+
+  console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Content ID:", contentId); // This will now work
+  console.log("Type:", type);
+
+  try {
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No session found. Please log in.");
+    }
+
+    const res = await fetch("/api/favorites", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionId}`,
+      },
+      body: JSON.stringify({
+        contentId: contentId, // Use the universally derived contentId
+        contentType: type,
+        // If your FavoriteItem model eventually needs 'title', you would add it here:
+        // title: getContentTitle(item, type),
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Server error response on add to favorites:", errorData);
+      throw new Error(errorData.error || "Failed to add to favorites");
+    }
+
+    const newFavorite = await res.json();
+    toast({ title: "Added to favorites!" });
+    setIsInFavorites(true);
+  } catch (error) {
+    console.error("Error adding to favorites:", error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to add to favorites",
+      variant: "destructive",
+    });
+  }
+};
+
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
       console.log("Submit comment:", { rating: userRating, comment: userComment })
