@@ -1,215 +1,527 @@
-"use client"
+// /app/readlist/page.tsx
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BookOpen, Star, Calendar, Trash2, Filter, Play ,Search} from "lucide-react"
-import { Sidebar } from "@/components/sidebar"
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  BookOpen,
+  Book,
+  PenTool, // For manga icon (or custom icon)
+  Star,
+  Calendar,
+  Trash2,
+  Filter,
+  Eye, // For 'reading'
+  CheckCircle, // For 'completed'
+  PauseCircle, // For 'on-hold'
+  XCircle, // For 'dropped'
+  Clock, // For 'plan-to-read'
+  Search,
+} from "lucide-react";
+import { Sidebar } from "@/components/sidebar";
+import { toast } from "@/components/ui/use-toast";
 
-interface ReadlistItem {
-  id: string
-  title: string
-  type: "manga" | "book"
-  poster: string
-  rating: number
-  year: number
-  addedDate: string
-  status: "plan-to-read" | "reading" | "completed" | "on-hold" | "dropped"
-  progress?: string
-  genres: string[]
+// API Imports
+import { jikanApi } from "@/lib/jikan-api"; // Assuming you have this for manga
+// For Google Books API, you might create a new utility:
+// import { googleBooksApi } from "@/lib/google-books-api"; // You'll need to create this
+
+// Define the API Key for Google Books - Replace with your actual key
+const GOOGLE_BOOKS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY; // Ensure this is set in your .env.local
+
+// Interface for the raw readlist item from your backend (matches Mongoose model)
+interface RawReadlistItem {
+  _id: string; // MongoDB ObjectId as a string
+  userId: string;
+  contentId: string; // The ID from Jikan, Google Books, etc.
+  contentType: "manga" | "book";
+  title: string;
+  poster?: string;
+  status: "plan-to-read" | "reading" | "completed" | "on-hold" | "dropped";
+  rating?: number;
+  progress?: {
+    current: number;
+    total?: number;
+    unit: "chapter" | "volume" | "page";
+  };
+  notes?: string;
+  startDate?: string; // ISO date string
+  completedDate?: string; // ISO date string
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
 }
 
-const mockReadlist: ReadlistItem[] = [
-  {
-    id: "1",
-    title: "Attack on Titan",
-    type: "manga",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.0,
-    year: 2009,
-    addedDate: "2024-01-20",
-    status: "reading",
-    progress: "Chapter 120/139",
-    genres: ["Action", "Drama"],
-  },
-  {
-    id: "2",
-    title: "The Hobbit",
-    type: "book",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 8.5,
-    year: 1937,
-    addedDate: "2024-01-18",
-    status: "plan-to-read",
-    genres: ["Fantasy", "Adventure"],
-  },
-  {
-    id: "3",
-    title: "One Piece",
-    type: "manga",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 9.2,
-    year: 1997,
-    addedDate: "2024-01-15",
-    status: "reading",
-    progress: "Chapter 1050/1100+",
-    genres: ["Adventure", "Comedy"],
-  },
-  {
-    id: "4",
-    title: "Dune",
-    type: "book",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 8.8,
-    year: 1965,
-    addedDate: "2024-01-12",
-    status: "completed",
-    progress: "Finished",
-    genres: ["Sci-Fi", "Adventure"],
-  },
-  {
-    id: "5",
-    title: "Chainsaw Man",
-    type: "manga",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 8.9,
-    year: 2018,
-    addedDate: "2024-01-10",
-    status: "completed",
-    progress: "Chapter 97/97",
-    genres: ["Action", "Horror"],
-  },
-  {
-    id: "6",
-    title: "1984",
-    type: "book",
-    poster: "/placeholder.svg?height=300&width=200",
-    rating: 8.7,
-    year: 1949,
-    addedDate: "2024-01-08",
-    status: "on-hold",
-    progress: "Page 150/328",
-    genres: ["Dystopian", "Political"],
-  },
-]
+// Interface for the readlist item with detailed information, used for display
+interface DisplayReadlistItem {
+  _id: string; // The ID of the readlist record itself from MongoDB
+  id: string; // The content ID (e.g., Jikan manga ID, Google Books volume ID)
+  title: string;
+  type: "manga" | "book";
+  poster: string;
+  rating?: number;
+  year?: number; // Publication year
+  addedDate: string; // Date when the item was added to readlist
+  genres?: string[]; // Manga genres or book categories
+  status: "plan-to-read" | "reading" | "completed" | "on-hold" | "dropped";
+  progress?: {
+    current: number;
+    total?: number;
+    unit: "chapter" | "volume" | "page";
+  };
+  notes?: string;
+  startDate?: string;
+  completedDate?: string;
+}
 
 export default function ReadlistPage() {
-  const [readlist, setReadlist] = useState<ReadlistItem[]>(mockReadlist)
-  const [selectedStatus, setSelectedStatus] = useState<string>("all")
-  const [selectedType, setSelectedType] = useState<string>("all")
+  const [readlist, setReadlist] = useState<DisplayReadlistItem[]>([]);
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredReadlist = readlist.filter((item) => {
-    const statusMatch = selectedStatus === "all" || item.status === selectedStatus
-    const typeMatch = selectedType === "all" || item.type === selectedType
-    return statusMatch && typeMatch
-  })
+  useEffect(() => {
+    async function fetchReadlistAndDetails() {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const removeFromReadlist = (id: string) => {
-    setReadlist(readlist.filter((item) => item.id !== id))
-  }
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          throw new Error("No session found. Please log in.");
+        }
 
-  const updateStatus = (id: string, newStatus: ReadlistItem["status"]) => {
-    setReadlist(readlist.map((item) => (item.id === id ? { ...item, status: newStatus } : item)))
-  }
+        // 1. Fetch raw readlist items from your backend
+        const response = await fetch("/api/readlist", {
+          headers: {
+            Authorization: `Bearer ${sessionId}`,
+          },
+        });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "plan-to-read":
-        return "bg-blue-600"
-      case "reading":
-        return "bg-green-600"
-      case "completed":
-        return "bg-purple-600"
-      case "on-hold":
-        return "bg-yellow-600"
-      case "dropped":
-        return "bg-red-600"
-      default:
-        return "bg-gray-600"
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error fetching raw readlist:", errorData);
+          throw new Error(
+            errorData.error || `Failed to fetch readlist IDs: ${response.statusText}`
+          );
+        }
+        const rawReadlist: RawReadlistItem[] = await response.json();
+        console.log("Fetched raw readlist from backend:", rawReadlist);
+
+        // 2. Fetch detailed information for each readlist item from external APIs concurrently
+        const detailedReadlistPromises = rawReadlist.map(
+          async (item: RawReadlistItem) => {
+            let itemDetails: DisplayReadlistItem | null = null;
+
+            try {
+              switch (item.contentType) {
+                case "manga":
+                  const mangaDataResponse = await jikanApi.getMangaById(
+                    parseInt(item.contentId)
+                  );
+                  const mangaData = mangaDataResponse.data;
+                  if (mangaData) {
+                    itemDetails = {
+                      _id: item._id,
+                      id: mangaData.mal_id.toString(),
+                      title: mangaData.title,
+                      type: "manga",
+                      poster: mangaData.images?.webp?.image_url || "/placeholder.svg",
+                      rating: mangaData.score || 0,
+                      year: mangaData.published?.from
+                        ? new Date(mangaData.published.from).getFullYear()
+                        : 0,
+                      addedDate: item.createdAt,
+                      genres: mangaData.genres ? mangaData.genres.map((g) => g.name) : [],
+                      status: item.status,
+                      progress: item.progress,
+                      notes: item.notes,
+                      startDate: item.startDate,
+                      completedDate: item.completedDate,
+                    };
+                  }
+                  break;
+                case "book":
+                  if (!GOOGLE_BOOKS_API_KEY) {
+                    console.error("Google Books API Key is not set.");
+                    break;
+                  }
+                  const bookResponse = await fetch(
+                    `https://www.googleapis.com/books/v1/volumes/${item.contentId}?key=${GOOGLE_BOOKS_API_KEY}`
+                  );
+                  if (!bookResponse.ok) {
+                    console.error(
+                      `Failed to fetch book details for ID ${item.contentId}: ${bookResponse.statusText}`
+                    );
+                    break;
+                  }
+                  const bookData = await bookResponse.json();
+
+                  if (bookData && bookData.volumeInfo) {
+                    const volumeInfo = bookData.volumeInfo;
+                    itemDetails = {
+                      _id: item._id,
+                      id: bookData.id.toString(),
+                      title: volumeInfo.title,
+                      type: "book",
+                      poster: volumeInfo.imageLinks?.thumbnail || "/placeholder.svg",
+                      rating: volumeInfo.averageRating || 0,
+                      year: volumeInfo.publishedDate
+                        ? parseInt(volumeInfo.publishedDate.substring(0, 4))
+                        : 0,
+                      addedDate: item.createdAt,
+                      genres: volumeInfo.categories || [],
+                      status: item.status,
+                      progress: item.progress,
+                      notes: item.notes,
+                      startDate: item.startDate,
+                      completedDate: item.completedDate,
+                    };
+                  }
+                  break;
+                default:
+                  console.warn(
+                    `Unknown content type: ${item.contentType} for contentId: ${item.contentId}`
+                  );
+                  break;
+              }
+            } catch (detailError) {
+              console.error(
+                `Failed to fetch details for ${item.contentType} with ID ${item.contentId}:`,
+                detailError
+              );
+              return null;
+            }
+            return itemDetails;
+          }
+        );
+
+        const results = await Promise.allSettled(detailedReadlistPromises);
+        const fetchedReadlist: DisplayReadlistItem[] = results
+          .filter(
+            (result) => result.status === "fulfilled" && result.value !== null
+          )
+          .map((result) => (result as PromiseFulfilledResult<DisplayReadlistItem>).value);
+
+        setReadlist(fetchedReadlist);
+        console.log("Processed readlist for display:", fetchedReadlist);
+      } catch (err: any) {
+        console.error("Error in fetchReadlistAndDetails:", err);
+        setError(err.message || "Failed to load readlist.");
+        toast({
+          title: "Error",
+          description: err.message || "Failed to load readlist. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "plan-to-read":
-        return "Plan to Read"
-      case "reading":
-        return "Reading"
-      case "completed":
-        return "Completed"
-      case "on-hold":
-        return "On Hold"
-      case "dropped":
-        return "Dropped"
-      default:
-        return status
+    fetchReadlistAndDetails();
+  }, []);
+
+  // Function to remove a readlist item from both frontend state and backend
+  const removeReadlistItem = async (readlistRecordId: string) => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Cannot remove item. Please log in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/readlist", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          _id: readlistRecordId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Server error response on remove readlist item:", errorData);
+        throw new Error(errorData.error || "Failed to remove item from readlist");
+      }
+
+      setReadlist((prev) => prev.filter((item) => item._id !== readlistRecordId));
+      toast({ title: "Removed from readlist!" });
+    } catch (err: any) {
+      console.error("Error removing readlist item:", err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to remove item from readlist.",
+        variant: "destructive",
+      });
     }
-  }
+  };
+
+  // Function to update the status of a readlist item
+  const updateReadlistItemStatus = async (
+    readlistRecordId: string,
+    newStatus: DisplayReadlistItem["status"]
+  ) => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Cannot update item status. Please log in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/readlist", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          _id: readlistRecordId,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Server error response on update readlist status:", errorData);
+        throw new Error(errorData.error || "Failed to update item status");
+      }
+
+      // Update local state
+      setReadlist((prev) =>
+        prev.map((item) =>
+          item._id === readlistRecordId ? { ...item, status: newStatus } : item
+        )
+      );
+      toast({ title: "Readlist status updated!" });
+    } catch (err: any) {
+      console.error("Error updating readlist status:", err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update item status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Placeholder for adding to readlist (you'd typically trigger this from search results/detail pages)
+  const handleAddToReadlist = async (
+    contentId: string,
+    contentType: "manga" | "book",
+    title: string,
+    poster?: string // Optional poster
+  ) => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Please log in to add to readlist.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/readlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          contentId,
+          contentType,
+          title,
+          poster,
+          status: "plan-to-read",
+        }), // Default status when adding
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error adding to readlist:", errorData);
+        if (response.status === 409) {
+          toast({
+            title: "Already in Readlist",
+            description: "This item is already in your readlist.",
+            variant: "default",
+          });
+        } else {
+          throw new Error(errorData.error || "Failed to add to readlist");
+        }
+      } else {
+        const newItem = await response.json();
+        setReadlist((prev) => [
+          {
+            _id: newItem._id,
+            id: newItem.contentId,
+            title: newItem.title,
+            type: newItem.contentType,
+            poster: newItem.poster || "/placeholder.svg",
+            rating: newItem.rating || 0,
+            year: 0, // Will be fetched with details
+            addedDate: newItem.createdAt,
+            genres: [], // Will be fetched with details
+            status: newItem.status,
+            progress: newItem.progress,
+            notes: newItem.notes,
+            startDate: newItem.startDate,
+            completedDate: newItem.completedDate,
+          },
+          ...prev,
+        ]);
+        toast({ title: "Added to readlist!" });
+        // Optionally, re-fetch all for full details (or implement a way to fetch details for just the new item)
+        // fetchReadlistAndDetails();
+      }
+    } catch (err: any) {
+      console.error("Error adding to readlist:", err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to add to readlist.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredReadlist = readlist.filter(
+    (item) =>
+      (selectedType === "all" || item.type === selectedType) &&
+      (selectedStatus === "all" || item.status === selectedStatus)
+  );
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "manga":
-        return "bg-orange-600"
+        return "bg-pink-600";
       case "book":
-        return "bg-red-600"
+        return "bg-teal-600";
       default:
-        return "bg-gray-600"
+        return "bg-gray-600";
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "manga":
-        return "Manga"
+        return "Manga";
       case "book":
-        return "Book"
+        return "Book";
       default:
-        return type
+        return type;
     }
+  };
+
+  const getStatusColor = (status: DisplayReadlistItem["status"]) => {
+    switch (status) {
+      case "plan-to-read":
+        return "bg-gray-500";
+      case "reading":
+        return "bg-blue-500";
+      case "completed":
+        return "bg-green-500";
+      case "on-hold":
+        return "bg-orange-500";
+      case "dropped":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getStatusLabel = (status: DisplayReadlistItem["status"]) => {
+    switch (status) {
+      case "plan-to-read":
+        return "Plan to Read";
+      case "reading":
+        return "Reading";
+      case "completed":
+        return "Completed";
+      case "on-hold":
+        return "On Hold";
+      case "dropped":
+        return "Dropped";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusIcon = (status: DisplayReadlistItem["status"]) => {
+    switch (status) {
+      case "plan-to-read":
+        return <Clock className="h-3 w-3 mr-1" />;
+      case "reading":
+        return <Eye className="h-3 w-3 mr-1" />;
+      case "completed":
+        return <CheckCircle className="h-3 w-3 mr-1" />;
+      case "on-hold":
+        return <PauseCircle className="h-3 w-3 mr-1" />;
+      case "dropped":
+        return <XCircle className="h-3 w-3 mr-1" />;
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading readlist...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Error: {error}
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
+      <Sidebar />
 
-
-  <Sidebar />
-
-      {/* Header */}
+      {/* Main App Header */}
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-30">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 ml-12">
               <h1 className="text-2xl font-bold text-white">AniMov</h1>
             </div>
-
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10"
-           
-              >
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                 <Search className="h-5 w-5" />
               </Button>
-
-   
             </div>
           </div>
         </div>
       </header>
-      {/* Main Content */}
+
+      {/* Main Content Area for Readlist Page */}
       <div className="relative z-10">
-        {/* Header */}
+        {/* Readlist Section Header with Filtering */}
         <header className="bg-black/20 backdrop-blur-md border-b border-white/10 pt-20 pb-6">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <BookOpen className="h-8 w-8 text-orange-500" />
+                <BookOpen className="h-8 w-8 text-pink-500" />
                 <div>
                   <h1 className="text-3xl font-bold text-white">Readlist</h1>
-                  <p className="text-gray-400">Track your reading progress</p>
+                  <p className="text-gray-400">Books and Manga you plan to read or are currently reading</p>
                 </div>
               </div>
               <Badge variant="outline" className="text-white border-white/20">
@@ -217,48 +529,63 @@ export default function ReadlistPage() {
               </Badge>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-4 flex-wrap">
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap items-center gap-4">
               <Filter className="h-5 w-5 text-gray-400" />
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="plan-to-read">Plan to Read</SelectItem>
-                  <SelectItem value="reading">Reading</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="on-hold">On Hold</SelectItem>
-                  <SelectItem value="dropped">Dropped</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="manga">Manga</SelectItem>
-                  <SelectItem value="book">Books</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 flex-wrap">
+                {["all", "manga", "book"].map((type) => (
+                  <Button
+                    key={type}
+                    variant={selectedType === type ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedType(type)}
+                    className={
+                      selectedType === type
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    }
+                  >
+                    {type === "all" ? "All Types" : getTypeLabel(type)}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-2 flex-wrap ml-auto md:ml-0">
+                {["all", "plan-to-read", "reading", "completed", "on-hold", "dropped"].map((status) => (
+                  <Button
+                    key={status}
+                    variant={selectedStatus === status ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedStatus(status as DisplayReadlistItem["status"] | "all")}
+                    className={
+                      selectedStatus === status
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    }
+                  >
+                    {status === "all" ? "All Statuses" : getStatusLabel(status as DisplayReadlistItem["status"])}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </header>
 
+        {/* Readlist Grid */}
         <div className="container mx-auto px-4 py-8">
           {filteredReadlist.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No items in readlist</h3>
-              <p className="text-gray-400">Add books and manga to your readlist to track your progress</p>
+              <h3 className="text-xl font-semibold text-white mb-2">Your readlist is empty</h3>
+              <p className="text-gray-400">Start adding books or manga to your readlist</p>
+              {/* Example of how you might use handleAddToReadlist for testing */}
+              {/* <Button onClick={() => handleAddToReadlist("1", "manga", "One Piece")}>Add Sample Manga</Button>
+              <Button onClick={() => handleAddToReadlist("zyTCAlFPjgWC", "book", "The Lord of the Rings")}>Add Sample Book</Button> */}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredReadlist.map((item) => (
                 <Card
-                  key={item.id}
+                  key={item._id}
                   className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20 transition-all duration-300 group"
                 >
                   <CardContent className="p-0">
@@ -269,25 +596,31 @@ export default function ReadlistPage() {
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 right-2">
-                        <Badge className="bg-yellow-500 text-black">
-                          <Star className="h-3 w-3 mr-1" />
-                          {item.rating.toFixed(1)}
+                        {item.rating !== undefined && item.rating > 0 && (
+                           <Badge className="bg-yellow-500 text-black">
+                             <Star className="h-3 w-3 mr-1" />
+                             {item.rating.toFixed(1)}
+                           </Badge>
+                        )}
+                      </div>
+                      <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        <Badge className={`${getTypeColor(item.type)} text-white`}>
+                          {item.type === "manga" ? (
+                            <PenTool className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Book className="h-3 w-3 mr-1" />
+                          )}
+                          {getTypeLabel(item.type)}
                         </Badge>
-                      </div>
-                      <div className="absolute top-2 left-2">
-                        <Badge className={`${getTypeColor(item.type)} text-white`}>{getTypeLabel(item.type)}</Badge>
-                      </div>
-                      <div className="absolute bottom-2 left-2">
                         <Badge className={`${getStatusColor(item.status)} text-white`}>
-                          {getStatusLabel(item.status)}
+                          {getStatusIcon(item.status)} {getStatusLabel(item.status)}
                         </Badge>
                       </div>
-                      <div className="absolute bottom-2 right-2 flex gap-1">
-                 
+                      <div className="absolute bottom-2 right-2">
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => removeFromReadlist(item.id)}
+                          onClick={() => removeReadlistItem(item._id)}
                           className="bg-red-600 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -297,34 +630,49 @@ export default function ReadlistPage() {
                     <div className="p-4">
                       <h4 className="font-semibold text-white mb-2 line-clamp-2">{item.title}</h4>
                       <div className="flex items-center gap-4 text-sm text-gray-400 mb-2">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {item.year}
+                        {item.year && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {item.year}
+                          </div>
+                        )}
+                        <div className="text-xs">
+                          Added {new Date(item.addedDate).toLocaleDateString()}
                         </div>
                       </div>
-                      {item.progress && <p className="text-xs text-blue-400 mb-2">{item.progress}</p>}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {item.genres.slice(0, 2).map((genre, index) => (
+                      {item.progress && item.progress.current !== undefined && item.progress.unit && (
+                        <div className="text-sm text-gray-300 mb-2">
+                          Progress: {item.progress.current}
+                          {item.progress.total ? ` / ${item.progress.total}` : ""}{" "}
+                          {item.progress.unit}
+                        </div>
+                      )}
+                      {item.notes && (
+                         <div className="text-sm text-gray-300 mb-2 line-clamp-2">
+                            Notes: {item.notes}
+                         </div>
+                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {item.genres?.slice(0, 2).map((genre, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
                             {genre}
                           </Badge>
                         ))}
                       </div>
-                      <Select
-                        value={item.status}
-                        onValueChange={(value) => updateStatus(item.id, value as ReadlistItem["status"])}
-                      >
-                        <SelectTrigger className="w-full bg-white/5 border-white/10 text-white text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="plan-to-read">Plan to Read</SelectItem>
-                          <SelectItem value="reading">Reading</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="on-hold">On Hold</SelectItem>
-                          <SelectItem value="dropped">Dropped</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="mt-3 flex gap-2 justify-center">
+                         {/* Status Update Buttons */}
+                        {item.status !== 'reading' && (
+                            <Button size="sm" onClick={() => updateReadlistItemStatus(item._id, "reading")}>
+                                Reading
+                            </Button>
+                        )}
+                        {item.status !== 'completed' && (
+                            <Button size="sm" onClick={() => updateReadlistItemStatus(item._id, "completed")}>
+                                Completed
+                            </Button>
+                        )}
+                        {/* Add more status buttons as needed */}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -334,5 +682,5 @@ export default function ReadlistPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

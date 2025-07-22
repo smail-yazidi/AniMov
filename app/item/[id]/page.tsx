@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Skeleton } from "@/components/ui/skeleton"
-import { toast } from "@/components/ui/use-toast"; // Or sometimes "@/components/ui/toast"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/use-toast";
 import {
   Star,
   Heart,
@@ -23,10 +23,14 @@ import {
   Info,
   Calendar,
   DollarSign,
-} from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { useParams } from "next/navigation"
+  BookOpen, // For readlist (manga/book)
+  ListPlus, // For watchlist (movie/tv/anime)
+  Check, // For 'Added' state
+  Minus, // For 'Remove'
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useParams } from "next/navigation";
 import {
   tmdbApi,
   type MovieDetails,
@@ -36,10 +40,71 @@ import {
   type Movie,
   type TVShow,
   getImageUrl,
-} from "@/lib/tmdb-api"
-import { jikanApi, type JikanAnime, type JikanManga } from "@/lib/jikan-api"
-import { googleBooksApi, type GoogleBook, getBookImageUrl, getBookDescription } from "@/lib/google-books-api"
-import { Sidebar } from "@/components/sidebar"
+} from "@/lib/tmdb-api";
+import { jikanApi, type JikanAnime, type JikanManga } from "@/lib/jikan-api";
+import {
+  googleBooksApi,
+  type GoogleBook,
+  getBookImageUrl,
+  getBookDescription,
+} from "@/lib/google-books-api";
+import { Sidebar } from "@/components/sidebar";
+
+// --- INTERFACES FOR CONSISTENCY (Add these if they are not globally defined) ---
+// You might have these in your models or types directory.
+// For `WatchlistItemModel` and `ReadlistItemModel`, you need their interfaces.
+
+// Assuming these are from your models/WatchlistItem.ts
+interface RawWatchlistItem {
+  _id: string; // MongoDB ObjectId as a string
+  userId: string;
+  contentId: string; // The ID from TMDB, Jikan, etc.
+  contentType: "movie" | "tv" | "anime"; // Specific types for watchlist
+  status: "plan-to-watch" | "watching" | "completed" | "on-hold" | "dropped";
+  progress?: string; // e.g., "Episode 5/12", "Chapter 100/200"
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Assuming this is for frontend display with richer details
+interface DisplayWatchlistItem extends RawWatchlistItem {
+  title: string;
+  poster: string;
+  rating?: number;
+  year?: number;
+  genres?: string[];
+  // Add other fields you fetch from external APIs for display
+}
+
+// Assuming these are from your models/ReadlistItem.ts
+interface RawReadlistItem {
+  _id: string;
+  userId: string;
+  contentId: string;
+  contentType: "manga" | "book";
+  title: string;
+  poster?: string;
+  status: "plan-to-read" | "reading" | "completed" | "on-hold" | "dropped";
+  rating?: number;
+  progress?: {
+    current: number;
+    total?: number;
+    unit: "chapter" | "volume" | "page";
+  };
+  notes?: string;
+  startDate?: string;
+  completedDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Assuming this is for frontend display with richer details
+interface DisplayReadlistItem extends RawReadlistItem {
+  year?: number; // Publication year
+  genres?: string[]; // Manga genres or book categories
+  // Add other fields you fetch from external APIs for display
+}
+// --- END INTERFACE DEFINITIONS ---
 
 // Sample friends comments (you can replace this with real data later)
 const friendsComments = [
@@ -48,7 +113,8 @@ const friendsComments = [
     user: "Ahmed Mohamed",
     avatar: "/placeholder.svg?height=40&width=40",
     rating: 9,
-    comment: "Absolutely amazing! The action sequences were incredible and the story kept me engaged throughout.",
+    comment:
+      "Absolutely amazing! The action sequences were incredible and the story kept me engaged throughout.",
     date: "2024-01-15",
     likes: 12,
   },
@@ -57,31 +123,45 @@ const friendsComments = [
     user: "Sarah Johnson",
     avatar: "/placeholder.svg?height=40&width=40",
     rating: 8,
-    comment: "Great movie with excellent cinematography. The characters were well developed and the plot was engaging.",
+    comment:
+      "Great movie with excellent cinematography. The characters were well developed and the plot was engaging.",
     date: "2024-01-14",
     likes: 8,
   },
-]
+];
 
 export default function ItemDetailPage() {
-  const params = useParams()
-  const [item, setItem] = useState<MovieDetails | TVShowDetails | JikanAnime | JikanManga | GoogleBook | null>(null)
-  const [credits, setCredits] = useState<{ cast: Cast[]; crew: Crew[] } | null>(null)
-  const [similarItems, setSimilarItems] = useState<(Movie | TVShow)[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userRating, setUserRating] = useState(0)
-  const [userComment, setUserComment] = useState("")
-  const [isInWatchlist, setIsInWatchlist] = useState(false)
-  const [isInFavorites, setIsInFavorites] = useState(false)
+  const params = useParams();
+  const [item, setItem] = useState<
+    MovieDetails | TVShowDetails | JikanAnime | JikanManga | GoogleBook | null
+  >(null);
+  const [credits, setCredits] = useState<{ cast: Cast[]; crew: Crew[] } | null>(
+    null
+  );
+  const [similarItems, setSimilarItems] = useState<(Movie | TVShow | JikanAnime | JikanManga | GoogleBook)[]>([]); // Expanded types
+  const [loading, setLoading] = useState(true);
+  const [userRating, setUserRating] = useState(0);
+  const [userComment, setUserComment] = useState("");
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isInReadlist, setIsInReadlist] = useState(false); // New state for readlist
+  const [isInFavorites, setIsInFavorites] = useState(false);
 
-  const itemId = params.id as string
-  const [type, id] = itemId.split("-")
+  const itemId = params.id as string;
+  const [type, id] = itemId.split("-");
+
+  // --- Check if in Favorites (existing and working) ---
   useEffect(() => {
     const checkIfInFavorites = async () => {
-      if (!item || !item.id || !type) return
+      // Ensure item, item.id, and type are available before making API call
+      if (!item || !item.id || !type) return;
 
       try {
-        const sessionId = localStorage.getItem("sessionId") // أو حسب طريقة تخزينك للجلسة
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          setIsInFavorites(false); // Not logged in, so not in favorites
+          return;
+        }
+
         const res = await fetch(
           `/api/favorites/check?contentId=${item.id}&contentType=${type}`,
           {
@@ -89,49 +169,122 @@ export default function ItemDetailPage() {
               Authorization: `Bearer ${sessionId}`,
             },
           }
-        )
-        const data = await res.json()
-        setIsInFavorites(data.inFavorites)
+        );
+        const data = await res.json();
+        setIsInFavorites(data.inFavorites);
       } catch (error) {
-        console.error("Failed to check favorites:", error)
+        console.error("Failed to check favorites:", error);
+        setIsInFavorites(false); // Assume not in favorites on error
       }
-    }
+    };
 
-    checkIfInFavorites()
-  }, [item, type])
+    checkIfInFavorites();
+  }, [item, type]);
 
+  // --- Check if in Watchlist (NEW) ---
+  useEffect(() => {
+    const checkIfInWatchlist = async () => {
+      // Only check for "movie", "tv", "anime" types
+      const watchableTypes = ["movie", "tv", "anime"];
+      if (!item || !item.id || !type || !watchableTypes.includes(type)) {
+        setIsInWatchlist(false);
+        return;
+      }
+
+      try {
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          setIsInWatchlist(false);
+          return;
+        }
+
+        const res = await fetch(
+          `/api/watchlist/check?contentId=${item.id}&contentType=${type}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionId}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setIsInWatchlist(data.inWatchlist);
+      } catch (error) {
+        console.error("Failed to check watchlist:", error);
+        setIsInWatchlist(false);
+      }
+    };
+
+    checkIfInWatchlist();
+  }, [item, type]);
+
+  // --- Check if in Readlist (NEW) ---
+  useEffect(() => {
+    const checkIfInReadlist = async () => {
+      // Only check for "manga", "book" types
+      const readableTypes = ["manga", "book"];
+      if (!item || !item.id || !type || !readableTypes.includes(type)) {
+        setIsInReadlist(false);
+        return;
+      }
+
+      try {
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          setIsInReadlist(false);
+          return;
+        }
+
+        const res = await fetch(
+          `/api/readlist/check?contentId=${item.id}&contentType=${type}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionId}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setIsInReadlist(data.inReadlist);
+      } catch (error) {
+        console.error("Failed to check readlist:", error);
+        setIsInReadlist(false);
+      }
+    };
+
+    checkIfInReadlist();
+  }, [item, type]);
 
   useEffect(() => {
     const loadItemData = async () => {
       try {
-        setLoading(true)
-        const numericId = Number.parseInt(id)
+        setLoading(true);
+        const numericId = Number.parseInt(id);
 
         if (type === "movie") {
           const [movieDetails, movieCredits, similarMovies] = await Promise.all([
             tmdbApi.getMovieDetails(numericId),
             tmdbApi.getMovieCredits(numericId),
             tmdbApi.getSimilarMovies(numericId),
-          ])
-          setItem(movieDetails)
-          setCredits(movieCredits)
-          setSimilarItems(similarMovies.results.slice(0, 8))
+          ]);
+          setItem(movieDetails);
+          setCredits(movieCredits);
+          setSimilarItems(similarMovies.results.slice(0, 8));
         } else if (type === "tv") {
           const [tvDetails, tvCredits, similarTVShows] = await Promise.all([
             tmdbApi.getTVShowDetails(numericId),
             tmdbApi.getTVShowCredits(numericId),
             tmdbApi.getSimilarTVShows(numericId),
-          ])
-          setItem(tvDetails)
-          setCredits(tvCredits)
-          setSimilarItems(similarTVShows.results.slice(0, 8))
+          ]);
+          setItem(tvDetails);
+          setCredits(tvCredits);
+          setSimilarItems(similarTVShows.results.slice(0, 8));
         } else if (type === "anime") {
-          const [animeDetails, animeCharacters, animeRecommendations] = await Promise.all([
-            jikanApi.getAnimeById(numericId),
-            jikanApi.getAnimeCharacters(numericId).catch(() => ({ data: [] })),
-            jikanApi.getAnimeRecommendations(numericId).catch(() => ({ data: [] })),
-          ])
-          setItem(animeDetails.data)
+          const [animeDetails, animeCharacters, animeRecommendations] =
+            await Promise.all([
+              jikanApi.getAnimeById(numericId),
+              jikanApi.getAnimeCharacters(numericId).catch(() => ({ data: [] })),
+              jikanApi.getAnimeRecommendations(numericId).catch(() => ({ data: [] })),
+            ]);
+          setItem(animeDetails.data);
           setCredits({
             cast: animeCharacters.data.slice(0, 12).map((char) => ({
               id: char.character.mal_id,
@@ -141,7 +294,7 @@ export default function ItemDetailPage() {
               order: 0,
             })),
             crew: [],
-          })
+          });
           setSimilarItems(
             animeRecommendations.data.slice(0, 8).map((rec) => ({
               id: rec.entry.mal_id,
@@ -149,15 +302,17 @@ export default function ItemDetailPage() {
               poster_path: rec.entry.images.jpg.image_url,
               vote_average: rec.entry.score || 0,
               release_date: rec.entry.aired?.from || "",
-            })),
-          )
+              type: "anime" // Add type for proper routing/handling
+            }))
+          );
         } else if (type === "manga") {
-          const [mangaDetails, mangaCharacters, mangaRecommendations] = await Promise.all([
-            jikanApi.getMangaById(numericId),
-            jikanApi.getMangaCharacters(numericId).catch(() => ({ data: [] })),
-            jikanApi.getMangaRecommendations(numericId).catch(() => ({ data: [] })),
-          ])
-          setItem(mangaDetails.data)
+          const [mangaDetails, mangaCharacters, mangaRecommendations] =
+            await Promise.all([
+              jikanApi.getMangaById(numericId),
+              jikanApi.getMangaCharacters(numericId).catch(() => ({ data: [] })),
+              jikanApi.getMangaRecommendations(numericId).catch(() => ({ data: [] })),
+            ]);
+          setItem(mangaDetails.data);
           setCredits({
             cast: mangaCharacters.data.slice(0, 12).map((char) => ({
               id: char.character.mal_id,
@@ -173,7 +328,7 @@ export default function ItemDetailPage() {
               department: "Writing",
               profile_path: null,
             })),
-          })
+          });
           setSimilarItems(
             mangaRecommendations.data.slice(0, 8).map((rec) => ({
               id: rec.entry.mal_id,
@@ -181,11 +336,12 @@ export default function ItemDetailPage() {
               poster_path: rec.entry.images.jpg.image_url,
               vote_average: rec.entry.score || 0,
               release_date: rec.entry.published?.from || "",
-            })),
-          )
+              type: "manga" // Add type for proper routing/handling
+            }))
+          );
         } else if (type === "book") {
-          const bookDetails = await googleBooksApi.getBookById(id)
-          setItem(bookDetails)
+          const bookDetails = await googleBooksApi.getBookById(id);
+          setItem(bookDetails);
           setCredits({
             cast: [],
             crew:
@@ -196,15 +352,15 @@ export default function ItemDetailPage() {
                 department: "Writing",
                 profile_path: null,
               })) || [],
-          })
+          });
           // For books, we'll search for similar books by the same author or category
           if (bookDetails.volumeInfo.authors && bookDetails.volumeInfo.authors.length > 0) {
             try {
               const similarBooksResponse = await googleBooksApi.searchBooks(
                 `inauthor:"${bookDetails.volumeInfo.authors[0]}"`,
                 0,
-                8,
-              )
+                8
+              );
               setSimilarItems(
                 similarBooksResponse.items
                   ?.filter((book) => book.id !== id)
@@ -215,96 +371,212 @@ export default function ItemDetailPage() {
                     poster_path: getBookImageUrl(book),
                     vote_average: book.volumeInfo.averageRating || 0,
                     release_date: book.volumeInfo.publishedDate || "",
-                  })) || [],
-              )
+                    type: "book" // Add type for proper routing/handling
+                  })) || []
+              );
             } catch (error) {
-              setSimilarItems([])
+              setSimilarItems([]);
             }
           }
         }
       } catch (error) {
-        console.error("Error loading item data:", error)
+        console.error("Error loading item data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load item details. Please try again.",
+          variant: "destructive",
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (id && type) {
-      loadItemData()
+      loadItemData();
     }
-  }, [id, type])
+  }, [id, type]);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
+  const getTypeIcon = (contentType: string) => { // Renamed param to avoid conflict
+    switch (contentType) {
       case "movie":
-        return Film
+        return Film;
       case "tv":
-        return Tv
+        return Tv;
+      case "anime":
+        return ListPlus; // Or a specific anime icon
+      case "manga":
+        return BookOpen;
+      case "book":
+        return BookOpen;
       default:
-        return Info
+        return Info;
     }
-  }
+  };
 
-  const TypeIcon = getTypeIcon(type)
+  const TypeIcon = getTypeIcon(type);
 
-  // This is the `handleAddToWatchlist` function you asked for,
-  // typically used from a detail page to add an item to the watchlist.
-  // It takes the actual content details, not just the _id of a watchlist record.
-  const handleAddToWatchlist = async (
-    contentId: string,
-    contentType: DisplayWatchlistItem["type"],
-    initialStatus: RawWatchlistItem["status"] = "plan-to-watch",
-    initialProgress: string = ""
-  ) => {
+  // --- Handlers for Watchlist ---
+
+  const handleToggleWatchlist = async () => {
+    if (!item || !item.id) return;
+
+    const contentId = item.id.toString();
+    // Ensure the content type is valid for watchlist
+    const watchableTypes: ("movie" | "tv" | "anime")[] = ["movie", "tv", "anime"];
+    if (!watchableTypes.includes(type as any)) {
+      toast({
+        title: "Invalid Type",
+        description: `Cannot add ${type} to watchlist.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const contentType = type as "movie" | "tv" | "anime"; // Cast for type safety
+
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
         toast({
           title: "Error",
-          description: "No session found. Please log in to add to watchlist.",
+          description: "No session found. Please log in.",
           variant: "destructive",
         });
         return;
       }
 
-      const response = await fetch("/api/watchlist", {
-        method: "POST",
+      const method = isInWatchlist ? "DELETE" : "POST";
+      const body = isInWatchlist
+        ? JSON.stringify({ contentId, contentType }) // For DELETE, send contentId and contentType
+        : JSON.stringify({ contentId, contentType, status: "plan-to-watch" }); // For POST
+
+      const url = `/api/watchlist`; // All operations go to the base route now
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sessionId}`,
         },
-        body: JSON.stringify({
-          contentId,
-          contentType,
-          status: initialStatus,
-          progress: initialProgress,
-        }),
+        body,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to add ${contentType} to watchlist`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(`Server error response on ${method} watchlist:`, errorData);
+        throw new Error(errorData.error || `Failed to ${method === 'DELETE' ? 'remove from' : 'add to'} watchlist`);
       }
 
-      const responseData = await response.json();
-      if (response.status === 200 && responseData.message === "Item already in watchlist") {
-        toast({
-          title: "Already in Watchlist",
-          description: "This item is already in your watchlist.",
-        });
-      } else {
-        toast({
-          title: "Added to Watchlist!",
-          description: `${contentType === 'movie' ? 'Movie' : contentType === 'tv' ? 'TV Series' : 'Anime'} added successfully.`,
-        });
-        // Re-fetch the watchlist to update the displayed list
-        fetchWatchlistAndDetails();
+      if (method === "POST") {
+        const responseData = await res.json();
+        if (res.status === 200 && responseData.message === "Item already in watchlist") {
+          toast({
+            title: "Already in Watchlist",
+            description: "This item is already in your watchlist.",
+          });
+          setIsInWatchlist(true); // Ensure state is true if it already exists
+        } else {
+          toast({ title: "Added to Watchlist!" });
+          setIsInWatchlist(true);
+        }
+      } else { // DELETE method
+        toast({ title: "Removed from Watchlist!" });
+        setIsInWatchlist(false);
       }
-    } catch (err: any) {
-      console.error("Error adding to watchlist:", err);
+    } catch (error: any) {
+      console.error(`Error toggling watchlist for ${contentId}:`, error);
       toast({
         title: "Error",
-        description: err.message || `Failed to add ${contentType} to watchlist.`,
+        description: error.message || `Failed to toggle watchlist.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+
+  // --- Handlers for Readlist (NEW) ---
+  const handleToggleReadlist = async () => {
+    if (!item || !item.id) return;
+
+    const contentId = item.id.toString();
+    let itemTitle = "";
+    let itemPoster: string | undefined = undefined;
+
+    // Determine title and poster based on item type
+    if (item && "title" in item) {
+      itemTitle = item.title;
+      itemPoster = (item as any).poster_path
+        ? getImageUrl((item as any).poster_path, "w500")
+        : (item as any).images?.webp?.image_url;
+    } else if (item && "volumeInfo" in item) {
+      itemTitle = item.volumeInfo.title;
+      itemPoster = getBookImageUrl(item);
+    }
+
+    const readableTypes: ("manga" | "book")[] = ["manga", "book"];
+    if (!readableTypes.includes(type as any)) {
+      toast({
+        title: "Invalid Type",
+        description: `Cannot add ${type} to readlist.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const contentType = type as "manga" | "book"; // Cast for type safety
+
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        toast({
+          title: "Error",
+          description: "No session found. Please log in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const method = isInReadlist ? "DELETE" : "POST";
+      const body = isInReadlist
+        ? JSON.stringify({ contentId, contentType }) // For DELETE, send contentId and contentType
+        : JSON.stringify({ contentId, contentType, title: itemTitle, poster: itemPoster, status: "plan-to-read" }); // For POST
+
+      const url = `/api/readlist`; // All operations go to the base route now
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(`Server error response on ${method} readlist:`, errorData);
+        throw new Error(errorData.error || `Failed to ${method === 'DELETE' ? 'remove from' : 'add to'} readlist`);
+      }
+
+      if (method === "POST") {
+        const responseData = await res.json();
+        if (res.status === 200 && responseData.message === "Item already in readlist") {
+          toast({
+            title: "Already in Readlist",
+            description: "This item is already in your readlist.",
+          });
+          setIsInReadlist(true); // Ensure state is true if it already exists
+        } else {
+          toast({ title: "Added to Readlist!" });
+          setIsInReadlist(true);
+        }
+      } else { // DELETE method
+        toast({ title: "Removed from Readlist!" });
+        setIsInReadlist(false);
+      }
+    } catch (error: any) {
+      console.error(`Error toggling readlist for ${contentId}:`, error);
+      toast({
+        title: "Error",
+        description: error.message || `Failed to toggle readlist.`,
         variant: "destructive",
       });
     }
@@ -312,60 +584,80 @@ export default function ItemDetailPage() {
 
 
   const handleAddToFavorites = async () => {
-    if (!item || !item.id || !type) return
+    if (!item || !item.id || !type) return;
 
     try {
-      const sessionId = localStorage.getItem("sessionId")
+      const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
-        throw new Error("No session found. Please log in.") // More user-friendly message
+        toast({
+          title: "Error",
+          description: "No session found. Please log in.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      const method = isInFavorites ? "DELETE" : "POST"; // Determine if adding or removing
+      const body = JSON.stringify({
+        contentId: item.id.toString(),
+        contentType: type,
+      });
 
       const res = await fetch("/api/favorites", {
-        method: "POST",
+        method,
         headers: {
           "Content-Type": "application/json",
-          // Crucially, send the sessionId in the Authorization header
           Authorization: `Bearer ${sessionId}`,
         },
-        body: JSON.stringify({
-          // DO NOT send userId here. The backend will derive it from the session.
-          contentId: item.id.toString(),
-          contentType: type,
-        }),
-      })
+        body,
+      });
 
       if (!res.ok) {
-        const errorData = await res.json()
-        // Log the full server response for debugging
-        console.error("Server error response on add to favorites:", errorData)
-        throw new Error(errorData.error || "Failed to add to favorites")
+        const errorData = await res.json();
+        console.error(`Server error response on ${method} favorites:`, errorData);
+        throw new Error(errorData.error || `Failed to ${method === 'DELETE' ? 'remove from' : 'add to'} favorites`);
       }
 
-      const newFavorite = await res.json()
-      toast({ title: "Added to favorites!" })
-      setIsInFavorites(true)
-    } catch (error) {
-      console.error("Error adding to favorites:", error)
+      if (method === "POST") {
+        const responseData = await res.json();
+        if (res.status === 200 && responseData.message === "Item already in favorites") {
+          toast({
+            title: "Already in Favorites",
+            description: "This item is already in your favorites.",
+          });
+          setIsInFavorites(true); // Ensure state is true if it already exists
+        } else {
+          toast({ title: "Added to favorites!" });
+          setIsInFavorites(true);
+        }
+      } else { // DELETE method
+        toast({ title: "Removed from favorites!" });
+        setIsInFavorites(false);
+      }
+    } catch (error: any) {
+      console.error(`Error toggling favorites for ${item.id}:`, error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to favorites",
+        description: error.message || `Failed to toggle favorites.`,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
+
+
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
-      console.log("Submit comment:", { rating: userRating, comment: userComment })
-      setUserComment("")
-      setUserRating(0)
+      console.log("Submit comment:", { rating: userRating, comment: userComment });
+      setUserComment("");
+      setUserRating(0);
     }
-  }
+  };
 
   const formatRuntime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${hours}h ${mins}m`
-  }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -373,17 +665,53 @@ export default function ItemDetailPage() {
       currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   // Helper function to get rating safely
   const getRating = (item: any) => {
-    if (!item) return 0
-    if ("vote_average" in item) return item.vote_average || 0
-    if ("score" in item) return item.score || 0
-    if ("volumeInfo" in item && item.volumeInfo.averageRating) return item.volumeInfo.averageRating
-    return 0
-  }
+    if (!item) return 0;
+    if ("vote_average" in item) return item.vote_average || 0;
+    if ("score" in item) return item.score || 0;
+    if ("volumeInfo" in item && item.volumeInfo.averageRating)
+      return item.volumeInfo.averageRating;
+    return 0;
+  };
+
+  // Helper function to get poster path
+  const getPosterPath = (item: any, itemType: string) => {
+    if (!item) return "/placeholder.svg";
+
+    if (itemType === "movie" || itemType === "tv") {
+      return getImageUrl(item.poster_path, "w500");
+    }
+    if (itemType === "anime" || itemType === "manga") {
+      return item.images?.webp?.image_url || "/placeholder.svg";
+    }
+    if (itemType === "book") {
+      return getBookImageUrl(item);
+    }
+    return "/placeholder.svg";
+  };
+
+  // Helper function to get title
+  const getItemTitle = (item: any, itemType: string) => {
+    if (!item) return "N/A";
+    if (itemType === "movie") return item.title;
+    if (itemType === "tv") return item.name;
+    if (itemType === "anime" || itemType === "manga") return item.title;
+    if (itemType === "book") return item.volumeInfo.title;
+    return "N/A";
+  };
+
+  // Helper function to get overview/description
+  const getItemOverview = (item: any, itemType: string) => {
+    if (!item) return "No description available.";
+    if (itemType === "movie" || itemType === "tv") return item.overview;
+    if (itemType === "anime" || itemType === "manga") return item.synopsis;
+    if (itemType === "book") return getBookDescription(item);
+    return "No description available.";
+  };
 
   if (loading) {
     return (
