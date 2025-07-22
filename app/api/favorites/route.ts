@@ -110,10 +110,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
 export async function DELETE(req: Request) {
-  console.log("DELETE /api/favorites called."); // Debug log
-  await connectToDatabase(); // Connect to your database
+  console.log("DELETE /api/favorites called.");
+  await connectToDatabase();
 
   try {
     const userId = await getUserIdFromRequest(req);
@@ -121,34 +120,31 @@ export async function DELETE(req: Request) {
       console.warn("Unauthorized attempt to remove favorite: Missing or invalid session.");
       return NextResponse.json({ error: "Unauthorized: Invalid or missing session" }, { status: 401 });
     }
+
     console.log(`User ID for DELETE operation: ${userId}`);
 
-    // Extract the _id of the favorite item record from the request body
-    const body = await req.json();
-   const { contentId, contentType } = body;
-if (!contentId || !contentType) {
-  return NextResponse.json({ error: "Missing contentId or contentType" }, { status: 400 });
-}
+    const { contentId, contentType } = await req.json(); // ✅ FIXED
 
-const deleted = await FavoriteItemModel.findOneAndDelete({
-  contentId,
-  contentType,
-  userId: new mongoose.Types.ObjectId(userId),
-});
+    if (!contentId || !contentType) {
+      return NextResponse.json({ error: "Missing contentId or contentType" }, { status: 400 });
+    }
 
+    const deleted = await FavoriteItemModel.findOneAndDelete({
+      contentId,
+      contentType,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
 
     if (!deleted) {
-      console.warn(`Favorite item with _id ${_id} not found or does not belong to user ${userId}.`);
-      // Return 404 if not found, or 403/401 if it exists but belongs to another user (though current logic covers this with userId check)
+      console.warn(`Favorite item with contentId=${contentId} and contentType=${contentType} not found for user ${userId}.`);
       return NextResponse.json({ error: "Favorite item not found or unauthorized to delete" }, { status: 404 });
     }
 
-    console.log(`Favorite item ${_id} successfully removed.`);
+    console.log(`Favorite item with contentId=${contentId} removed successfully for user ${userId}.`);
     return NextResponse.json({ message: "Favorite removed successfully" }, { status: 200 });
 
   } catch (error) {
     console.error("Error removing favorite:", error);
-    // Handle specific Mongoose or MongoDB errors if needed
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
     }
