@@ -447,60 +447,87 @@ const handleAddToWatchlist = async () => {
 };
 
  
-const handleAddToFavorites = async () => {
-  // Define contentId using your helper function here
-  const contentId = getContentId(item, type);
+ const handleAddToFavorites = async () => {
+    const contentId = getContentId(item, type);
 
-  // Updated check: use the derived contentId
-  if (!item || !contentId || !type) {
-    console.log("Missing item, content ID, or type for favorites. Aborting.");
-    return;
-  }
-
-  console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Content ID:", contentId); // This will now work
-  console.log("Type:", type);
-
-  try {
-    const sessionId = localStorage.getItem("sessionId");
-    if (!sessionId) {
-      throw new Error("No session found. Please log in.");
+    if (!item || !contentId || !type) {
+      console.log("Missing item, content ID, or type for favorites. Aborting.");
+      return;
     }
 
-    const res = await fetch("/api/favorites", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionId}`,
-      },
-      body: JSON.stringify({
-        contentId: contentId, // Use the universally derived contentId
-        contentType: type,
-        // If your FavoriteItem model eventually needs 'title', you would add it here:
-        // title: getContentTitle(item, type),
-      }),
-    });
+    console.log("Attempting to toggle Favorite status...");
+    console.log("Item:", item);
+    console.log("Content ID:", contentId);
+    console.log("Type:", type);
+    console.log("Current isInFavorites:", isInFavorites);
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Server error response on add to favorites:", errorData);
-      throw new Error(errorData.error || "Failed to add to favorites");
+
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        throw new Error("No session found. Please log in.");
+      }
+
+      let res;
+      let method;
+      let successMessage;
+      let errorMessage;
+
+      if (isInFavorites) {
+        // If already in favorites, remove it (DELETE)
+        method = "DELETE";
+        successMessage = "Removed from favorites!";
+        errorMessage = "Failed to remove from favorites.";
+        res = await fetch("/api/favorites", {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionId}`,
+          },
+          body: JSON.stringify({
+            contentId: contentId, // DELETE often takes ID in body or URL param
+            contentType: type, // Pass contentType for accurate deletion if needed on backend
+          }),
+        });
+      } else {
+        // If not in favorites, add it (POST)
+        method = "POST";
+        successMessage = "Added to favorites!";
+        errorMessage = "Failed to add to favorites.";
+        res = await fetch("/api/favorites", {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionId}`,
+          },
+          body: JSON.stringify({
+            contentId: contentId,
+            contentType: type,
+            // Assuming FavoriteItem model does not require 'title' based on previous conversation
+            // If it does, you'd add: title: getContentTitle(item, type),
+          }),
+        });
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(`Server error response on ${method} favorites:`, errorData);
+        throw new Error(errorData.error || errorMessage);
+      }
+
+      // Update local state based on the action
+      setIsInFavorites(!isInFavorites);
+      toast({ title: successMessage });
+
+    } catch (error) {
+      console.error("Error toggling favorites:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to toggle favorites",
+        variant: "destructive",
+      });
     }
-
-    const newFavorite = await res.json();
-    toast({ title: "Added to favorites!" });
-    setIsInFavorites(true);
-  } catch (error) {
-    console.error("Error adding to favorites:", error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to add to favorites",
-      variant: "destructive",
-    });
-  }
-};
-
+  };
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
       console.log("Submit comment:", { rating: userRating, comment: userComment })
