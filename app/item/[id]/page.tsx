@@ -341,7 +341,10 @@ const isWatchingContentType = (contentType) => {
 const handleAddToReadingList = async () => {
   // Get the correct ID based on the item type
   const contentId = getContentId(item, type);
-
+  console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Content ID:", contentId); // Log the correct ID
+  console.log("Type:", type);
   // Updated check: now uses `contentId` instead of `item.id`
   if (!item || !contentId || !type) {
     console.log("Missing item, content ID, or type. Aborting.");
@@ -420,7 +423,7 @@ const handleAddToWatchlist = async () => {
         Authorization: `Bearer ${sessionId}`,
       },
       body: JSON.stringify({
-        contentId: contentId, // Use the correct, universal contentId here
+          contentId: item.id.toString(),
         contentType: type,
       }),
     });
