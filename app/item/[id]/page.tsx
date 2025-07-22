@@ -448,11 +448,12 @@ const handleAddToWatchlist = async () => {
 };
 
   const handleAddToFavorites = async () => {
-    if (!item || !item.id || !type) return
  console.log("Info exists. Details:");
   console.log("Item:", item);
   console.log("Content ID:", contentId); // Log the correct ID
   console.log("Type:", type);
+    if (!item || !item.id || !type) return
+
 
     try {
       const sessionId = localStorage.getItem("sessionId")
