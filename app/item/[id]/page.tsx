@@ -330,7 +330,9 @@ const isWatchingContentType = (contentType) => {
   const TypeIcon = getTypeIcon(type)
 const handleAddToReadingList = async () => {
   // Ensure 'item' and 'type' are available and valid before proceeding
+  console.log("clicked")
   if (!item || !item.id || !type) return;
+  console.log("info exist ")
 
   try {
     const sessionId = localStorage.getItem("sessionId");
@@ -377,8 +379,9 @@ const handleAddToReadingList = async () => {
   // typically used from a detail page to add an item to the watchlist.
   // It takes the actual content details, not just the _id of a watchlist record.
 const handleAddToWatchlist = async () => {
+    console.log("clicked")
   if (!item || !item.id || !type) return; // Ensure item and type are available
-
+  console.log("info exist")
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
