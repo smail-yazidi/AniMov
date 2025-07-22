@@ -105,19 +105,7 @@ useEffect(() => {
       setIsInFavorites(false);
     }
   };
-const getContentId = (contentItem, contentType) => {
-  if (!contentItem) return null; // Handle null item gracefully
 
-  // For TMDB movies/TV and Google Books, the ID is 'id'
-  if (contentType === 'movie' || contentType === 'tv' || contentType === 'book') {
-    return contentItem.id?.toString();
-  }
-  // For Jikan Anime/Manga, the ID is 'mal_id'
-  if (contentType === 'anime' || contentType === 'manga') {
-    return contentItem.mal_id?.toString();
-  }
-  return null; // Fallback if type is unrecognized or ID is missing
-};
   const checkIfInWatchlist = async () => {
     const contentId = getContentId(item, type); // Use helper here too
     if (!item || !contentId || !type) return; // Check contentId
@@ -182,7 +170,19 @@ const getContentId = (contentItem, contentType) => {
   checkIfInReadingList();
 
 }, [item, type]); // Dependencies remain item and type/ Dependencies remain item and type
+const getContentId = (contentItem, contentType) => {
+  if (!contentItem) return null; // Handle null item gracefully
 
+  // For TMDB movies/TV and Google Books, the ID is 'id'
+  if (contentType === 'movie' || contentType === 'tv' || contentType === 'book') {
+    return contentItem.id?.toString();
+  }
+  // For Jikan Anime/Manga, the ID is 'mal_id'
+  if (contentType === 'anime' || contentType === 'manga') {
+    return contentItem.mal_id?.toString();
+  }
+  return null; // Fallback if type is unrecognized or ID is missing
+};
 // Helper to check if content is for reading
 const isReadingContentType = (contentType) => {
   return contentType === 'book' || contentType === 'manga';
