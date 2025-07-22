@@ -78,22 +78,20 @@ export default function ItemDetailPage() {
   const [type, id] = itemId.split("-")
 useEffect(() => {
   const checkIfInFavorites = async () => {
-    if (!item || !item.id || !type) return;
+    const contentId = getContentId(item, type); // Use helper here too
+    if (!item || !contentId || !type) return; // Check contentId
 
     try {
-      const sessionId = localStorage.getItem("sessionId"); // أو حسب طريقة تخزينك للجلسة
+      const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
-        // If there's no session, assume not in any list and return early.
-        // Or handle this by redirecting to login or showing a specific message.
         setIsInFavorites(false);
         setIsInWatchlist(false);
-        setIsInReadingList(false); // Make sure you have this state
+        setIsInReadingList(false);
         return;
       }
 
-      // Check Favorites
       const favRes = await fetch(
-        `/api/favorites/check?contentId=${item.id}&contentType=${type}`,
+        `/api/favorites/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
         {
           headers: {
             Authorization: `Bearer ${sessionId}`,
@@ -104,12 +102,25 @@ useEffect(() => {
       setIsInFavorites(favData.inFavorites);
     } catch (error) {
       console.error("Failed to check favorites:", error);
-      setIsInFavorites(false); // Default to false on error
+      setIsInFavorites(false);
     }
   };
+const getContentId = (contentItem, contentType) => {
+  if (!contentItem) return null; // Handle null item gracefully
 
+  // For TMDB movies/TV and Google Books, the ID is 'id'
+  if (contentType === 'movie' || contentType === 'tv' || contentType === 'book') {
+    return contentItem.id?.toString();
+  }
+  // For Jikan Anime/Manga, the ID is 'mal_id'
+  if (contentType === 'anime' || contentType === 'manga') {
+    return contentItem.mal_id?.toString();
+  }
+  return null; // Fallback if type is unrecognized or ID is missing
+};
   const checkIfInWatchlist = async () => {
-    if (!item || !item.id || !type) return;
+    const contentId = getContentId(item, type); // Use helper here too
+    if (!item || !contentId || !type) return; // Check contentId
 
     try {
       const sessionId = localStorage.getItem("sessionId");
@@ -118,9 +129,8 @@ useEffect(() => {
         return;
       }
 
-      // Check Watchlist
       const watchRes = await fetch(
-        `/api/watchlist/check?contentId=${item.id}&contentType=${type}`,
+        `/api/watchlist/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
         {
           headers: {
             Authorization: `Bearer ${sessionId}`,
@@ -131,25 +141,24 @@ useEffect(() => {
       setIsInWatchlist(watchData.inWatchlist);
     } catch (error) {
       console.error("Failed to check watchlist:", error);
-      setIsInWatchlist(false); // Default to false on error
+      setIsInWatchlist(false);
     }
   };
 
   const checkIfInReadingList = async () => {
-    if (!item || !item.id || !type) return; // Note: 'type' might need to be specifically 'book' for this check
+    const contentId = getContentId(item, type); // Use helper here too
+    if (!item || !contentId || !type) return; // Check contentId
 
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
-        setIsInReadingList(false); // Make sure you have this state defined
+        setIsInReadingList(false);
         return;
       }
 
-      // Check Reading List (only if the item is a book)
-      // You might want to refine this condition based on your `isBook` logic
-      if (type === 'book') { // Or your 'isBook' check
+      if (type === 'book' || type === 'manga') { // Corrected: Check for both book and manga
         const readRes = await fetch(
-          `/api/readlist/check?contentId=${item.id}&contentType=${type}`,
+          `/api/readlist/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
           {
             headers: {
               Authorization: `Bearer ${sessionId}`,
@@ -159,11 +168,11 @@ useEffect(() => {
         const readData = await readRes.json();
         setIsInReadingList(readData.inReadingList);
       } else {
-        setIsInReadingList(false); // Not a book, so not in reading list
+        setIsInReadingList(false); // Not a reading type, so not in reading list
       }
     } catch (error) {
       console.error("Failed to check reading list:", error);
-      setIsInReadingList(false); // Default to false on error
+      setIsInReadingList(false);
     }
   };
 
@@ -172,7 +181,7 @@ useEffect(() => {
   checkIfInWatchlist();
   checkIfInReadingList();
 
-}, [item, type]); // Dependencies remain item and type
+}, [item, type]); // Dependencies remain item and type/ Dependencies remain item and type
 
 // Helper to check if content is for reading
 const isReadingContentType = (contentType) => {
@@ -183,6 +192,7 @@ const isReadingContentType = (contentType) => {
 const isWatchingContentType = (contentType) => {
   return contentType === 'movie' || contentType === 'tv' || contentType === 'anime';
 };
+
   useEffect(() => {
     const loadItemData = async () => {
       try {
@@ -329,94 +339,89 @@ const isWatchingContentType = (contentType) => {
 
   const TypeIcon = getTypeIcon(type)
 const handleAddToReadingList = async () => {
-  // Ensure 'item' and 'type' are available and valid before proceeding
-    console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Item ID:", item.id);
-  console.log("Type:", type);
+  // Get the correct ID based on the item type
+  const contentId = getContentId(item, type);
 
-   if (!item || !item.id || !type) {
-    console.log("Missing item, item.id, or type. Aborting.");
-    return; // Ensure item and type are available
+  // Updated check: now uses `contentId` instead of `item.id`
+  if (!item || !contentId || !type) {
+    console.log("Missing item, content ID, or type. Aborting.");
+    return;
   }
 
+  console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Content ID:", contentId); // Log the correct ID
+  console.log("Type:", type);
 
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
-      // Prompt the user to log in if no session is found
       throw new Error("No session found. Please log in to add to your reading list.");
     }
 
-    const res = await fetch("/api/readlist", { // Target your reading list API endpoint
+    const res = await fetch("/api/readlist", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Authenticate the request with the session ID
         Authorization: `Bearer ${sessionId}`,
       },
       body: JSON.stringify({
-        contentId: item.id.toString(), // The unique ID of the book
-        contentType: type, // Should be 'book' for reading list
-        // You might add a 'status' here, e.g., 'to-read', 'reading', 'finished'
-        // For simplicity, we'll just add it without a specific status for now.
+        contentId: contentId, // Use the correct, universal contentId here
+        contentType: type,
       }),
     });
 
     if (!res.ok) {
       const errorData = await res.json();
-      // Log the full server response for detailed debugging
       console.error("Server error response on add to reading list:", errorData);
       throw new Error(errorData.error || "Failed to add to reading list.");
     }
 
     const newReadingListItem = await res.json();
-    toast({ title: "Added to reading list!" }); // Display a success notification
-    setIsInWatchlist(true); // Assuming 'isInWatchlist' state is reused for 'isInReadingList'
+    toast({ title: "Added to reading list!" });
+    // IMPORTANT: You set setIsInWatchlist(true) here. It should be setIsInReadingList(true)
+    setIsInReadingList(true); // Corrected state update for reading list
   } catch (error) {
     console.error("Error adding to reading list:", error);
     toast({
       title: "Error",
       description: error instanceof Error ? error.message : "Failed to add to reading list.",
-      variant: "destructive", // Show an error style toast
+      variant: "destructive",
     });
   }
 };
-  // This is the `handleAddToWatchlist` function you asked for,
-  // typically used from a detail page to add an item to the watchlist.
-  // It takes the actual content details, not just the _id of a watchlist record.
 const handleAddToWatchlist = async () => {
   console.log("clicked");
-  console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Item ID:", item.id);
-  console.log("Type:", type);
-  if (!item || !item.id || !type) {
 
-    console.log("Missing item, item.id, or type. Aborting.");
-    return; // Ensure item and type are available
+  // Get the correct ID based on the item type
+  const contentId = getContentId(item, type);
+
+  // Updated check: now uses `contentId` instead of `item.id`
+  if (!item || !contentId || !type) {
+    console.log("Missing item, content ID, or type. Aborting.");
+    return;
   }
 
+  console.log("Info exists. Details:");
+  console.log("Item:", item);
+  console.log("Content ID:", contentId); // Log the correct ID
+  console.log("Type:", type);
 
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
-      // You might want to redirect to a login page here or show a specific login prompt
       throw new Error("No session found. Please log in.");
     }
 
-    const res = await fetch("/api/watchlist", { // Target your watchlist API endpoint
+    const res = await fetch("/api/watchlist", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Send the sessionId for authentication
         Authorization: `Bearer ${sessionId}`,
       },
       body: JSON.stringify({
-        contentId: item.id.toString(),
+        contentId: contentId, // Use the correct, universal contentId here
         contentType: type,
-        // You might add a 'status' here, e.g., 'watching', 'planned', 'completed' for watchlist
-        // For simplicity, we'll just add it without a specific status for now.
       }),
     });
 
@@ -427,7 +432,7 @@ const handleAddToWatchlist = async () => {
     }
 
     const newWatchlistItem = await res.json();
-    toast({ title: "Added to watchlist!" }); // Success toast
+    toast({ title: "Added to watchlist!" });
     setIsInWatchlist(true); // Update the local state
   } catch (error) {
     console.error("Error adding to watchlist:", error);
