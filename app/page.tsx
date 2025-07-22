@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, Play, BookOpen, Tv, Film, Users, Heart, Clock, Search, Book } from "lucide-react"
+import { Star, Play, BookOpen, Tv, Film, Users, Heart, Clock, Search, Book, NotebookPen } from "lucide-react" // Added NotebookPen for S-Note
 import Link from "next/link"
 import Image from "next/image"
 import { SearchModal } from "@/components/search-modal"
@@ -27,6 +28,7 @@ const userStats = {
   watchlistCount: 24,
   favoritesCount: 18,
   friendsCount: 12,
+  sNoteCount: 7, // Added a sample count for S-Note
 }
 
 export default function HomePage() {
@@ -46,6 +48,9 @@ export default function HomePage() {
     books: [],
   })
   const [loading, setLoading] = useState(true)
+  // Define a 'user' state to control the conditional rendering
+  // For demonstration, let's assume 'null' means not logged in
+  const [user, setUser] = useState(null); // Or use an auth hook to get the actual user object
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -162,7 +167,8 @@ export default function HomePage() {
                 <Search className="h-5 w-5" />
               </Button>
 
-              <UserDropdown />
+              {/* UserDropdown would typically receive the 'user' prop */}
+              <UserDropdown user={user} />
             </div>
           </div>
         </div>
@@ -171,62 +177,84 @@ export default function HomePage() {
       {/* Search Modal */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Quick Navigation Buttons with Counters */}
-      <section className="container mx-auto px-4 py-6">
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/watchlist" className="flex-1 max-w-sm">
-            <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 group cursor-pointer">
-              <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
-                    {userStats.watchlistCount}
-                  </Badge>
-                </div>
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Clock className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Watchlist</h3>
-                <p className="text-blue-100 text-sm">Your saved content</p>
-              </CardContent>
-            </Card>
-          </Link>
+      {/* Quick Navigation Buttons with Counters (Conditionally Rendered if user is NOT logged in) */}
+      {!user && ( // Corrected conditional rendering: using logical AND (&&)
+        <section className="container mx-auto px-4 py-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/watchlist" className="flex-1 max-w-sm">
+              <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 group cursor-pointer">
+                <CardContent className="p-6 text-center relative">
+                  {/* Counter Badge */}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
+                      {userStats.watchlistCount}
+                    </Badge>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Clock className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Watchlist</h3>
+                  <p className="text-blue-100 text-sm">Your saved content</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-          <Link href="/favorites" className="flex-1 max-w-sm">
-            <Card className="bg-gradient-to-r from-pink-600 to-pink-700 border-0 hover:from-pink-700 hover:to-pink-800 transition-all duration-300 group cursor-pointer">
-              <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
-                    {userStats.favoritesCount}
-                  </Badge>
-                </div>
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Heart className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Favorites</h3>
-                <p className="text-pink-100 text-sm">Your loved content</p>
-              </CardContent>
-            </Card>
-          </Link>
+            <Link href="/favorites" className="flex-1 max-w-sm">
+              <Card className="bg-gradient-to-r from-pink-600 to-pink-700 border-0 hover:from-pink-700 hover:to-pink-800 transition-all duration-300 group cursor-pointer">
+                <CardContent className="p-6 text-center relative">
+                  {/* Counter Badge */}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
+                      {userStats.favoritesCount}
+                    </Badge>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Heart className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Favorites</h3>
+                  <p className="text-pink-100 text-sm">Your loved content</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-          <Link href="/friends" className="flex-1 max-w-sm">
-            <Card className="bg-gradient-to-r from-green-600 to-green-700 border-0 hover:from-green-700 hover:to-green-800 transition-all duration-300 group cursor-pointer">
-              <CardContent className="p-6 text-center relative">
-                {/* Counter Badge */}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">{userStats.friendsCount}</Badge>
-                </div>
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Users className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Friends</h3>
-                <p className="text-green-100 text-sm">Connect & share</p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </section>
+            <Link href="/friends" className="flex-1 max-w-sm">
+              <Card className="bg-gradient-to-r from-green-600 to-green-700 border-0 hover:from-green-700 hover:to-green-800 transition-all duration-300 group cursor-pointer">
+                <CardContent className="p-6 text-center relative">
+                  {/* Counter Badge */}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">{userStats.friendsCount}</Badge>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Users className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Friends</h3>
+                  <p className="text-green-100 text-sm">Connect & share</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Added S-Note Link */}
+            <Link href="/s-note" className="flex-1 max-w-sm">
+              <Card className="bg-gradient-to-r from-purple-600 to-purple-700 border-0 hover:from-purple-700 hover:to-purple-800 transition-all duration-300 group cursor-pointer">
+                <CardContent className="p-6 text-center relative">
+                  {/* Counter Badge */}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-white/20 text-white border-0 text-xs px-2 py-1">
+                      {userStats.sNoteCount} {/* Using the new sNoteCount */}
+                    </Badge>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <NotebookPen className="h-8 w-8 text-white" /> {/* S-Note icon */}
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">S-Notes</h3>
+                  <p className="text-purple-100 text-sm">Your secure notes</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+          </div>
+        </section>
+      )}
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12">

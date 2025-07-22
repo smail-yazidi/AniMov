@@ -75,29 +75,29 @@ export default function ItemDetailPage() {
 
   const itemId = params.id as string
   const [type, id] = itemId.split("-")
-useEffect(() => {
-  const checkIfInFavorites = async () => {
-    if (!item || !item.id || !type) return
+  useEffect(() => {
+    const checkIfInFavorites = async () => {
+      if (!item || !item.id || !type) return
 
-    try {
-      const sessionId = localStorage.getItem("sessionId") // أو حسب طريقة تخزينك للجلسة
-      const res = await fetch(
-        `/api/favorites/check?contentId=${item.id}&contentType=${type}`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionId}`,
-          },
-        }
-      )
-      const data = await res.json()
-      setIsInFavorites(data.inFavorites)
-    } catch (error) {
-      console.error("Failed to check favorites:", error)
+      try {
+        const sessionId = localStorage.getItem("sessionId") // أو حسب طريقة تخزينك للجلسة
+        const res = await fetch(
+          `/api/favorites/check?contentId=${item.id}&contentType=${type}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionId}`,
+            },
+          }
+        )
+        const data = await res.json()
+        setIsInFavorites(data.inFavorites)
+      } catch (error) {
+        console.error("Failed to check favorites:", error)
+      }
     }
-  }
 
-  checkIfInFavorites()
-}, [item, type])
+    checkIfInFavorites()
+  }, [item, type])
 
 
   useEffect(() => {
@@ -249,32 +249,44 @@ useEffect(() => {
   const handleAddToWatchlist = () => {
     setIsInWatchlist(!isInWatchlist)
   }
-const handleAddToFavorites = async () => {
-  if (!item || !item.id || !type) return
+  const handleAddToFavorites = async () => {
+    if (!item || !item.id || !type) return
 
-  try {
-    const res = await fetch("/api/favorites", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contentId: item.id.toString(), // تأكد أنه string
-        contentType: type,             // النوع الذي حددته أنت مسبقًا
-      }),
-    })
+    try {
+      const sessionId = localStorage.getItem("sessionId")
+      if (!sessionId) {
+        throw new Error("No session found")
+      }
 
-    if (!res.ok) throw new Error("Failed to add to favorites")
+      const res = await fetch("/api/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          contentId: item.id.toString(),
+          contentType: type,
+        }),
+      })
 
-    const newFavorite = await res.json()
-    toast({ title: "Added to favorites!" })
-    setIsInFavorites(true) // مثلاً تغيّر الحالة
-  } catch (error) {
-    console.error("Error adding to favorites:", error)
-    toast({ title: "Error", description: "Failed to add to favorites", variant: "destructive" })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || "Failed to add to favorites")
+      }
+
+      const newFavorite = await res.json()
+      toast({ title: "Added to favorites!" })
+      setIsInFavorites(true)
+    } catch (error) {
+      console.error("Error adding to favorites:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add to favorites",
+        variant: "destructive"
+      })
+    }
   }
-}
-
 
   const handleSubmitComment = () => {
     if (userComment.trim() && userRating > 0) {
@@ -311,7 +323,7 @@ const handleAddToFavorites = async () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-	      <Sidebar />
+        <Sidebar />
 
         <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
@@ -506,16 +518,16 @@ const handleAddToFavorites = async () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4">
-                
-             <Button
-  size="lg"
-  variant="outline"
-  className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
-  onClick={handleAddToFavorites}
->
-  <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
-  {isInFavorites ? "In Favorites" : "Add to Favorites"}
-</Button>
+
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
+                    onClick={handleAddToFavorites}
+                  >
+                    <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
+                    {isInFavorites ? "In Favorites" : "Add to Favorites"}
+                  </Button>
 
                   <Button
                     size="lg"
