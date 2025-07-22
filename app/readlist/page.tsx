@@ -22,14 +22,11 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { toast } from "@/components/ui/use-toast";
+// Correctly import your Google Books API utility
+import { googleBooksApi, getBookImageUrl } from "@/lib/google-books-api";
+// API Imports (assuming jikanApi is correctly set up)
+import { jikanApi } from "@/lib/jikan-api";
 
-// API Imports
-import { jikanApi } from "@/lib/jikan-api"; // Assuming you have this for manga
-// For Google Books API, you might create a new utility:
-// import { googleBooksApi } from "@/lib/google-books-api"; // You'll need to create this
-
-// Define the API Key for Google Books - Replace with your actual key
-const GOOGLE_BOOKS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY; // Ensure this is set in your .env.local
 
 // Interface for the raw readlist item from your backend (matches Mongoose model)
 interface RawReadlistItem {
@@ -144,20 +141,8 @@ export default function ReadlistPage() {
                   }
                   break;
                 case "book":
-                  if (!GOOGLE_BOOKS_API_KEY) {
-                    console.error("Google Books API Key is not set.");
-                    break;
-                  }
-                  const bookResponse = await fetch(
-                    `https://www.googleapis.com/books/v1/volumes/${item.contentId}?key=${GOOGLE_BOOKS_API_KEY}`
-                  );
-                  if (!bookResponse.ok) {
-                    console.error(
-                      `Failed to fetch book details for ID ${item.contentId}: ${bookResponse.statusText}`
-                    );
-                    break;
-                  }
-                  const bookData = await bookResponse.json();
+                  // Use your googleBooksApi utility here
+                  const bookData = await googleBooksApi.getBookById(item.contentId);
 
                   if (bookData && bookData.volumeInfo) {
                     const volumeInfo = bookData.volumeInfo;
@@ -166,7 +151,8 @@ export default function ReadlistPage() {
                       id: bookData.id.toString(),
                       title: volumeInfo.title,
                       type: "book",
-                      poster: volumeInfo.imageLinks?.thumbnail || "/placeholder.svg",
+                      // Use the getBookImageUrl helper for consistency
+                      poster: getBookImageUrl(bookData, 'thumbnail'),
                       rating: volumeInfo.averageRating || 0,
                       year: volumeInfo.publishedDate
                         ? parseInt(volumeInfo.publishedDate.substring(0, 4))
@@ -187,23 +173,26 @@ export default function ReadlistPage() {
                   );
                   break;
               }
-            } catch (detailError) {
+            } catch (detailError: any) {
               console.error(
                 `Failed to fetch details for ${item.contentType} with ID ${item.contentId}:`,
                 detailError
               );
+              // Return null for items that failed to fetch details, they will be filtered out.
+              // You might want to log these or show a placeholder in the UI.
               return null;
             }
             return itemDetails;
           }
         );
 
+        // Filter out any null results from Promise.allSettled if an item's details couldn't be fetched
         const results = await Promise.allSettled(detailedReadlistPromises);
         const fetchedReadlist: DisplayReadlistItem[] = results
           .filter(
             (result) => result.status === "fulfilled" && result.value !== null
           )
-          .map((result) => (result as PromiseFulfilledResult<DisplayReadlistItem>).value);
+          .map((result) => (result as PromiseFulfilledResult<DisplayReadlistItem | null>).value as DisplayReadlistItem);
 
         setReadlist(fetchedReadlist);
         console.log("Processed readlist for display:", fetchedReadlist);
@@ -221,7 +210,7 @@ export default function ReadlistPage() {
     }
 
     fetchReadlistAndDetails();
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   // Function to remove a readlist item from both frontend state and backend
   const removeReadlistItem = async (readlistRecordId: string) => {
@@ -371,9 +360,9 @@ export default function ReadlistPage() {
             type: newItem.contentType,
             poster: newItem.poster || "/placeholder.svg",
             rating: newItem.rating || 0,
-            year: 0, // Will be fetched with details
+            year: 0, // Will be fetched with details if re-fetching, or needs to be set on POST
             addedDate: newItem.createdAt,
-            genres: [], // Will be fetched with details
+            genres: [], // Will be fetched with details if re-fetching, or needs to be set on POST
             status: newItem.status,
             progress: newItem.progress,
             notes: newItem.notes,
@@ -384,7 +373,7 @@ export default function ReadlistPage() {
         ]);
         toast({ title: "Added to readlist!" });
         // Optionally, re-fetch all for full details (or implement a way to fetch details for just the new item)
-        // fetchReadlistAndDetails();
+        // fetchReadlistAndDetails(); // Uncomment if you want immediate full details refresh
       }
     } catch (err: any) {
       console.error("Error adding to readlist:", err);
@@ -578,8 +567,14 @@ export default function ReadlistPage() {
               <h3 className="text-xl font-semibold text-white mb-2">Your readlist is empty</h3>
               <p className="text-gray-400">Start adding books or manga to your readlist</p>
               {/* Example of how you might use handleAddToReadlist for testing */}
-              {/* <Button onClick={() => handleAddToReadlist("1", "manga", "One Piece")}>Add Sample Manga</Button>
-              <Button onClick={() => handleAddToReadlist("zyTCAlFPjgWC", "book", "The Lord of the Rings")}>Add Sample Book</Button> */}
+              {/* These buttons are commented out because they require actual data,
+                  but show how you would call the function if you had mock content IDs. */}
+              {/*
+              <div className="flex justify-center gap-4 mt-4">
+                <Button onClick={() => handleAddToReadlist("1", "manga", "One Piece", "https://api.myanimelist.net/images/manga/1/1.jpg")}>Add Sample Manga</Button>
+                <Button onClick={() => handleAddToReadlist("zyTCAlFPjgWC", "book", "The Lord of the Rings", "http://books.google.com/books/content?id=zyTCAlFPjgWC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api")}>Add Sample Book</Button>
+              </div>
+              */}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -598,8 +593,8 @@ export default function ReadlistPage() {
                       <div className="absolute top-2 right-2">
                         {item.rating !== undefined && item.rating > 0 && (
                            <Badge className="bg-yellow-500 text-black">
-                             <Star className="h-3 w-3 mr-1" />
-                             {item.rating.toFixed(1)}
+                              <Star className="h-3 w-3 mr-1" />
+                              {item.rating.toFixed(1)}
                            </Badge>
                         )}
                       </div>
@@ -660,7 +655,7 @@ export default function ReadlistPage() {
                         ))}
                       </div>
                       <div className="mt-3 flex gap-2 justify-center">
-                         {/* Status Update Buttons */}
+                          {/* Status Update Buttons */}
                         {item.status !== 'reading' && (
                             <Button size="sm" onClick={() => updateReadlistItemStatus(item._id, "reading")}>
                                 Reading
@@ -671,7 +666,22 @@ export default function ReadlistPage() {
                                 Completed
                             </Button>
                         )}
-                        {/* Add more status buttons as needed */}
+                        {/* Add more status buttons as needed (e.g., set to plan-to-read, on-hold, dropped) */}
+                        {item.status !== 'plan-to-read' && (
+                            <Button size="sm" variant="secondary" onClick={() => updateReadlistItemStatus(item._id, "plan-to-read")}>
+                                Plan
+                            </Button>
+                        )}
+                        {item.status !== 'on-hold' && (
+                            <Button size="sm" variant="secondary" onClick={() => updateReadlistItemStatus(item._id, "on-hold")}>
+                                On Hold
+                            </Button>
+                        )}
+                        {item.status !== 'dropped' && (
+                            <Button size="sm" variant="destructive" onClick={() => updateReadlistItemStatus(item._id, "dropped")}>
+                                Dropped
+                            </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

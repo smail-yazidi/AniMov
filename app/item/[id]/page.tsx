@@ -572,7 +572,7 @@ const handleAddToWatchlist = async () => {
         <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
-             // ... inside your JSX
+       
 <Button variant="ghost" size="icon" className="text-white" onClick={() => router.back()}>
   <ArrowLeft className="h-5 w-5" />
 </Button>
@@ -662,7 +662,7 @@ const handleAddToWatchlist = async () => {
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-           // ... inside your JSX
+        
 <Button variant="ghost" size="icon" className="text-white" onClick={() => router.back()}>
   <ArrowLeft className="h-5 w-5" />
 </Button>
