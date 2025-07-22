@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "@/components/ui/use-toast"; // Or sometimes "@/components/ui/toast"
 import {
   Star,
-  Heart,
+  Heart,BookOpen,
   Clock,
   ArrowLeft,
   Play,
