@@ -1,18 +1,19 @@
-// Imports - ensure these paths are correct in your project
-"use client" // This must be at the very top of the file
+// @/app/favorites/page.tsx
+"use client"; // This must be at the very top of the file
 
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Heart, Star, Calendar, Trash2, Filter, Search } from "lucide-react"
-import { Sidebar } from "@/components/sidebar"
-import { toast } from "@/components/ui/use-toast" // Assuming shadcn/ui toast
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, Star, Calendar, Trash2, Filter, Search } from "lucide-react";
+import { Sidebar } from "@/components/sidebar";
+import { toast } from "@/components/ui/use-toast"; // Assuming shadcn/ui toast
 
 // API Imports - Adjust paths if different in your project
-import { tmdbApi, type Movie, type TVShow, getImageUrl } from "@/lib/tmdb-api"
-import { jikanApi, type JikanAnime, type JikanManga } from "@/lib/jikan-api"
-import { googleBooksApi, type GoogleBook, getBookImageUrl } from "@/lib/google-books-api"
+// Corrected import to use getMovieDetails and getTVShowDetails
+import { tmdbApi, getImageUrl } from "@/lib/tmdb-api"; // Assuming your tmdb-api.ts is in lib
+import { jikanApi } from "@/lib/jikan-api"; // Assuming your jikan-api.ts is in lib
+import { googleBooksApi, getBookImageUrl } from "@/lib/google-books-api"; // Assuming your google-books-api.ts is in lib
 
 // Interface for the raw favorite item as stored in your database
 interface RawFavoriteItem {
@@ -63,119 +64,144 @@ export default function FavoritesPage() {
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Error fetching raw favorites:", errorData);
-          throw new Error(errorData.error || `Failed to fetch favorite IDs: ${response.statusText}`);
+          throw new Error(
+            errorData.error || `Failed to fetch favorite IDs: ${response.statusText}`
+          );
         }
         const rawFavorites: RawFavoriteItem[] = await response.json();
         console.log("Fetched raw favorites from backend:", rawFavorites);
 
         // 2. Fetch detailed information for each favorite item from external APIs concurrently
-        const detailedFavoritePromises = rawFavorites.map(async (fav: RawFavoriteItem) => {
-          let itemDetails: DisplayFavoriteItem | null = null;
+        const detailedFavoritePromises = rawFavorites.map(
+          async (fav: RawFavoriteItem) => {
+            let itemDetails: DisplayFavoriteItem | null = null;
 
-          try {
-            switch (fav.contentType) {
-              case "movie":
-                const movieData = await tmdbApi.getMovieById(fav.contentId);
-                if (movieData) {
-                  itemDetails = {
-                    _id: fav._id,
-                    id: movieData.id.toString(),
-                    title: movieData.title,
-                    type: "movie",
-                    poster: getImageUrl(movieData.poster_path, "w500"),
-                    rating: movieData.vote_average,
-                    year: movieData.release_date ? parseInt(movieData.release_date.substring(0, 4)) : 0,
-                    addedDate: fav.createdAt,
-                    genres: movieData.genres ? movieData.genres.map(g => g.name) : [],
-                  };
-                }
-                break;
-              case "tv":
-                const tvData = await tmdbApi.getTVShowById(fav.contentId);
-                if (tvData) {
-                  itemDetails = {
-                    _id: fav._id,
-                    id: tvData.id.toString(),
-                    title: tvData.name,
-                    type: "tv",
-                    poster: getImageUrl(tvData.poster_path, "w500"),
-                    rating: tvData.vote_average,
-                    year: tvData.first_air_date ? parseInt(tvData.first_air_date.substring(0, 4)) : 0,
-                    addedDate: fav.createdAt,
-                    genres: tvData.genres ? tvData.genres.map(g => g.name) : [],
-                  };
-                }
-                break;
-              case "anime":
-                const animeData = await jikanApi.getAnimeById(fav.contentId);
-                if (animeData) {
-                  itemDetails = {
-                    _id: fav._id,
-                    id: animeData.mal_id.toString(),
-                    title: animeData.title,
-                    type: "anime",
-                    poster: animeData.images?.webp?.image_url || "/placeholder.svg",
-                    rating: animeData.score || 0,
-                    year: animeData.aired?.from ? new Date(animeData.aired.from).getFullYear() : 0,
-                    addedDate: fav.createdAt,
-                    genres: animeData.genres ? animeData.genres.map(g => g.name) : [],
-                  };
-                }
-                break;
-              case "manga":
-                const mangaData = await jikanApi.getMangaById(fav.contentId);
-                if (mangaData) {
-                  itemDetails = {
-                    _id: fav._id,
-                    id: mangaData.mal_id.toString(),
-                    title: mangaData.title,
-                    type: "manga",
-                    poster: mangaData.images?.webp?.image_url || "/placeholder.svg",
-                    rating: mangaData.score || 0,
-                    year: mangaData.published?.from ? new Date(mangaData.published.from).getFullYear() : 0,
-                    addedDate: fav.createdAt,
-                    genres: mangaData.genres ? mangaData.genres.map(g => g.name) : [],
-                  };
-                }
-                break;
-              case "book":
-                const bookData = await googleBooksApi.getBookById(fav.contentId);
-                if (bookData) {
-                  itemDetails = {
-                    _id: fav._id,
-                    id: bookData.id.toString(),
-                    title: bookData.volumeInfo?.title || "No Title",
-                    type: "book",
-                    poster: getBookImageUrl(bookData.volumeInfo?.imageLinks) || "/placeholder.svg",
-                    rating: bookData.volumeInfo?.averageRating || 0, // Google Books has averageRating
-                    year: bookData.volumeInfo?.publishedDate ? parseInt(bookData.volumeInfo.publishedDate.substring(0, 4)) : 0,
-                    addedDate: fav.createdAt,
-                    genres: bookData.volumeInfo?.categories || [],
-                  };
-                }
-                break;
-              default:
-                console.warn(`Unknown content type: ${fav.contentType} for contentId: ${fav.contentId}`);
-                break;
+            try {
+              switch (fav.contentType) {
+                case "movie":
+                  // CORRECTED: Use tmdbApi.getMovieDetails and parse ID to number
+                  const movieData = await tmdbApi.getMovieDetails(parseInt(fav.contentId));
+                  if (movieData) {
+                    itemDetails = {
+                      _id: fav._id,
+                      id: movieData.id.toString(),
+                      title: movieData.title,
+                      type: "movie",
+                      poster: getImageUrl(movieData.poster_path, "w500"),
+                      rating: movieData.vote_average,
+                      year: movieData.release_date
+                        ? parseInt(movieData.release_date.substring(0, 4))
+                        : 0,
+                      addedDate: fav.createdAt,
+                      genres: movieData.genres ? movieData.genres.map((g) => g.name) : [],
+                    };
+                  }
+                  break;
+                case "tv":
+                  // CORRECTED: Use tmdbApi.getTVShowDetails and parse ID to number
+                  const tvData = await tmdbApi.getTVShowDetails(parseInt(fav.contentId));
+                  if (tvData) {
+                    itemDetails = {
+                      _id: fav._id,
+                      id: tvData.id.toString(),
+                      title: tvData.name,
+                      type: "tv",
+                      poster: getImageUrl(tvData.poster_path, "w500"),
+                      rating: tvData.vote_average,
+                      year: tvData.first_air_date
+                        ? parseInt(tvData.first_air_date.substring(0, 4))
+                        : 0,
+                      addedDate: fav.createdAt,
+                      genres: tvData.genres ? tvData.genres.map((g) => g.name) : [],
+                    };
+                  }
+                  break;
+                case "anime":
+                  const animeDataResponse = await jikanApi.getAnimeById(parseInt(fav.contentId));
+                  const animeData = animeDataResponse.data; // Jikan returns data in a 'data' property
+                  if (animeData) {
+                    itemDetails = {
+                      _id: fav._id,
+                      id: animeData.mal_id.toString(),
+                      title: animeData.title,
+                      type: "anime",
+                      poster: animeData.images?.webp?.image_url || "/placeholder.svg",
+                      rating: animeData.score || 0,
+                      year: animeData.aired?.from
+                        ? new Date(animeData.aired.from).getFullYear()
+                        : 0,
+                      addedDate: fav.createdAt,
+                      genres: animeData.genres ? animeData.genres.map((g) => g.name) : [],
+                    };
+                  }
+                  break;
+                case "manga":
+                  const mangaDataResponse = await jikanApi.getMangaById(parseInt(fav.contentId));
+                  const mangaData = mangaDataResponse.data; // Jikan returns data in a 'data' property
+                  if (mangaData) {
+                    itemDetails = {
+                      _id: fav._id,
+                      id: mangaData.mal_id.toString(),
+                      title: mangaData.title,
+                      type: "manga",
+                      poster: mangaData.images?.webp?.image_url || "/placeholder.svg",
+                      rating: mangaData.score || 0,
+                      year: mangaData.published?.from
+                        ? new Date(mangaData.published.from).getFullYear()
+                        : 0,
+                      addedDate: fav.createdAt,
+                      genres: mangaData.genres ? mangaData.genres.map((g) => g.name) : [],
+                    };
+                  }
+                  break;
+                case "book":
+                  const bookData = await googleBooksApi.getBookById(fav.contentId);
+                  if (bookData) {
+                    itemDetails = {
+                      _id: fav._id,
+                      id: bookData.id.toString(),
+                      title: bookData.volumeInfo?.title || "No Title",
+                      type: "book",
+                      poster:
+                        getBookImageUrl(bookData) || "/placeholder.svg", // getBookImageUrl takes the entire book object
+                      rating: bookData.volumeInfo?.averageRating || 0, // Google Books has averageRating
+                      year: bookData.volumeInfo?.publishedDate
+                        ? parseInt(bookData.volumeInfo.publishedDate.substring(0, 4))
+                        : 0,
+                      addedDate: fav.createdAt,
+                      genres: bookData.volumeInfo?.categories || [],
+                    };
+                  }
+                  break;
+                default:
+                  console.warn(
+                    `Unknown content type: ${fav.contentType} for contentId: ${fav.contentId}`
+                  );
+                  break;
+              }
+            } catch (detailError) {
+              console.error(
+                `Failed to fetch details for ${fav.contentType} with ID ${fav.contentId}:`,
+                detailError
+              );
+              // Return null to filter out this item later if its details couldn't be fetched
+              return null;
             }
-          } catch (detailError) {
-            console.error(`Failed to fetch details for ${fav.contentType} with ID ${fav.contentId}:`, detailError);
-            // Return null to filter out this item later if its details couldn't be fetched
-            return null;
-          }
 
-          return itemDetails;
-        });
+            return itemDetails;
+          }
+        );
 
         // Wait for all detail fetches to complete. Use Promise.allSettled to handle individual failures.
         const results = await Promise.allSettled(detailedFavoritePromises);
         const fetchedFavorites: DisplayFavoriteItem[] = results
-          .filter(result => result.status === 'fulfilled' && result.value !== null)
-          .map(result => (result as PromiseFulfilledResult<DisplayFavoriteItem>).value);
+          .filter(
+            (result) => result.status === "fulfilled" && result.value !== null
+          )
+          .map((result) => (result as PromiseFulfilledResult<DisplayFavoriteItem>).value);
 
         setFavorites(fetchedFavorites);
         console.log("Processed favorites for display:", fetchedFavorites);
-
       } catch (err: any) {
         console.error("Error in fetchFavoritesAndDetails:", err);
         setError(err.message || "Failed to load favorites.");
@@ -193,7 +219,11 @@ export default function FavoritesPage() {
   }, []); // Empty dependency array means this runs once on component mount
 
   // Function to remove a favorite item from both frontend state and backend
-  const removeFavorite = async (favoriteRecordId: string, contentId: string, contentType: DisplayFavoriteItem['type']) => {
+  const removeFavorite = async (
+    favoriteRecordId: string,
+    contentId: string,
+    contentType: DisplayFavoriteItem["type"]
+  ) => {
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
@@ -406,7 +436,9 @@ export default function FavoritesPage() {
                           <Calendar className="h-3 w-3" />
                           {item.year}
                         </div>
-                        <div className="text-xs">Added {new Date(item.addedDate).toLocaleDateString()}</div>
+                        <div className="text-xs">
+                          Added {new Date(item.addedDate).toLocaleDateString()}
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {item.genres.slice(0, 2).map((genre, index) => (

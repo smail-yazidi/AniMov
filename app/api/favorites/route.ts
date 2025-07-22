@@ -110,4 +110,51 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  console.log("DELETE /api/favorites called."); // Debug log
+  await connectToDatabase(); // Connect to your database
+
+  try {
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) {
+      console.warn("Unauthorized attempt to remove favorite: Missing or invalid session.");
+      return NextResponse.json({ error: "Unauthorized: Invalid or missing session" }, { status: 401 });
+    }
+    console.log(`User ID for DELETE operation: ${userId}`);
+
+    // Extract the _id of the favorite item record from the request body
+    const body = await req.json();
+    const { _id } = body;
+
+    if (!_id) {
+      console.warn("Missing _id in favorite remove request body.");
+      return NextResponse.json({ error: "Missing favorite item ID for deletion" }, { status: 400 });
+    }
+    console.log(`Attempting to delete favorite item with _id: ${_id}`);
+
+    // Find and delete the favorite item, ensuring it belongs to the current user
+    const deleted = await FavoriteItemModel.findOneAndDelete({
+      _id: new mongoose.Types.ObjectId(_id), // Convert string _id to MongoDB ObjectId
+      userId: new mongoose.Types.ObjectId(userId), // Ensure the favorite belongs to the current user
+    });
+
+    if (!deleted) {
+      console.warn(`Favorite item with _id ${_id} not found or does not belong to user ${userId}.`);
+      // Return 404 if not found, or 403/401 if it exists but belongs to another user (though current logic covers this with userId check)
+      return NextResponse.json({ error: "Favorite item not found or unauthorized to delete" }, { status: 404 });
+    }
+
+    console.log(`Favorite item ${_id} successfully removed.`);
+    return NextResponse.json({ message: "Favorite removed successfully" }, { status: 200 });
+
+  } catch (error) {
+    console.error("Error removing favorite:", error);
+    // Handle specific Mongoose or MongoDB errors if needed
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
 // ... GET and DELETE handlers (add similar verbose logging for debugging)
