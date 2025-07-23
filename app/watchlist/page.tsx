@@ -1,7 +1,7 @@
 // /app/watchlist/page.tsx
 "use client";
 import Loading from './loading';
-
+import Link from "next/link"
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -553,6 +553,7 @@ export default function WatchlistPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredWatchlist.map((item) => (
+                     <Link key={item.id} href={`/item/${item.type}-${item.id}`}>
                 <Card
                   key={item._id}
                   className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20 transition-all duration-300 group"
@@ -628,7 +629,7 @@ export default function WatchlistPage() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
+                </Card></Link>
               ))}
             </div>
           )}
