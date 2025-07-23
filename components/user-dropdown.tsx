@@ -187,12 +187,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
   if (isLoading) {
     // If loading, render nothing or a minimal placeholder like a skeleton avatar button
     // This ensures no UI is shown until data is fetched or it's confirmed no user is logged in.
-    return (
-      <Button variant="ghost" size="sm" className="p-1 rounded-full animate-pulse bg-white/10">
-        <Avatar className="w-8 h-8">
-          <AvatarFallback className="bg-gray-700"></AvatarFallback> {/* Grey background for loading avatar */}
-        </Avatar>
-      </Button>
+    return (null
     );
   }
 
