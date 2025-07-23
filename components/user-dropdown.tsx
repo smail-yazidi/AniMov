@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Settings, LogOut, User, Heart, Clock, Users } from "lucide-react"
+// Import BookOpen for readlist, assuming you've added it to your icon library
+import { Settings, LogOut, User, Heart, Clock, Users, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -31,43 +32,107 @@ export function UserDropdown({ className }: UserDropdownProps) {
     displayName?: string
     avatar?: string
   } | null>(null)
+
+  // State variables for counts, initialized to null to indicate 'not yet fetched'
+  const [favoritesCount, setFavoritesCount] = useState<number | null>(null)
+  const [friendsCount, setFriendsCount] = useState<number | null>(null) // Assuming you'll have a /api/friends/count route
+  const [watchlistCount, setWatchlistCount] = useState<number | null>(null)
+  const [readlistCount, setReadlistCount] = useState<number | null>(null)
+
+  // Global loading state for the component
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { toast } = useToast()
 
-  // Fetch session on mount, using sessionId stored in localStorage
+  // Function to fetch all user-specific counts
+  const fetchUserCounts = async (sessionId: string) => {
+    try {
+      // Fetch counts from the new combined API route
+      const countsRes = await fetch("/api/count", {
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
+      })
+
+      if (countsRes.ok) {
+        const data = await countsRes.json()
+        setFavoritesCount(data.favoritesCount)
+        // Note: You need a friends count endpoint or include it in /api/count if you want to display it
+        // For now, setting to a placeholder if your /api/count doesn't return it
+        setFriendsCount(data.friendsCount || 0) // Assume 0 if not returned by /api/count
+        setWatchlistCount(data.watchlistCount)
+        setReadlistCount(data.readlistCount)
+      } else {
+        console.error("Failed to fetch user counts:", await countsRes.json())
+        // Reset counts to 0 on failure
+        setFavoritesCount(0)
+        setFriendsCount(0)
+        setWatchlistCount(0)
+        setReadlistCount(0)
+      }
+    } catch (error) {
+      console.error("Error fetching user counts:", error)
+      // Reset counts to 0 on network error
+      setFavoritesCount(0)
+      setFriendsCount(0)
+      setWatchlistCount(0)
+      setReadlistCount(0)
+    }
+  }
+
+  // Effect to handle session check and data fetching
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndFetchData = async () => {
+      setIsLoading(true) // Start loading before any fetches
+
       try {
         const sessionId = localStorage.getItem("sessionId")
         if (!sessionId) {
           setUser(null)
+          // No session, so no user or counts to display, stop loading
+          setIsLoading(false)
           return
         }
 
-        const res = await fetch("/api/auth/session", {
+        // 1. Fetch user session
+        const userRes = await fetch("/api/auth/session", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${sessionId}`,  // Typically Bearer token, adjust if your API expects differently
+            Authorization: `Bearer ${sessionId}`,
           },
         })
 
-        if (res.ok) {
-          const data = await res.json()
-          setUser(data.user)  // Make sure your API returns user info inside `user` key
+        if (userRes.ok) {
+          const userData = await userRes.json()
+          setUser(userData.user)
+          // 2. If user session is valid, fetch all counts
+          await fetchUserCounts(sessionId)
         } else {
+          // If session invalid, clear local storage and reset user/counts
           setUser(null)
-          localStorage.removeItem("sessionId") // Clear invalid session
+          localStorage.removeItem("sessionId")
+          setFavoritesCount(null)
+          setFriendsCount(null)
+          setWatchlistCount(null)
+          setReadlistCount(null)
         }
       } catch (error) {
-        console.error("Error checking auth status:", error)
+        console.error("Error during authentication or data fetching:", error)
         setUser(null)
         localStorage.removeItem("sessionId")
+        setFavoritesCount(null)
+        setFriendsCount(null)
+        setWatchlistCount(null)
+        setReadlistCount(null)
+      } finally {
+        setIsLoading(false) // Always stop loading, regardless of success or failure
       }
     }
 
-    checkAuth()
-  }, [])
+    checkAuthAndFetchData()
+  }, []) // Empty dependency array means this runs only once on mount
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,6 +171,10 @@ export function UserDropdown({ className }: UserDropdownProps) {
   const handleLogout = () => {
     localStorage.removeItem("sessionId")
     setUser(null)
+    setFavoritesCount(null)
+    setFriendsCount(null)
+    setWatchlistCount(null)
+    setReadlistCount(null)
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
@@ -114,7 +183,21 @@ export function UserDropdown({ className }: UserDropdownProps) {
     setIsOpen(false)
   }
 
+  // --- Render logic based on loading state ---
+  if (isLoading) {
+    // If loading, render nothing or a minimal placeholder like a skeleton avatar button
+    // This ensures no UI is shown until data is fetched or it's confirmed no user is logged in.
+    return (
+      <Button variant="ghost" size="sm" className="p-1 rounded-full animate-pulse bg-white/10">
+        <Avatar className="w-8 h-8">
+          <AvatarFallback className="bg-gray-700"></AvatarFallback> {/* Grey background for loading avatar */}
+        </Avatar>
+      </Button>
+    );
+  }
+
   if (!user) {
+    // If not loading AND no user, show the Sign In button
     return (
       <Link href="/auth/signin">
         <Button variant="outline" className="ml-2">
@@ -124,6 +207,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
     )
   }
 
+  // If not loading AND user is present, render the full dropdown
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <Button
@@ -165,25 +249,40 @@ export function UserDropdown({ className }: UserDropdownProps) {
 
             {/* Quick Stats */}
             <div className="p-4 border-b border-white/10">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-2 gap-4 text-center"> {/* Changed to grid-cols-2 for 4 items */}
                 <Link href="/watchlist" onClick={() => setIsOpen(false)}>
                   <div className="hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer">
                     <Clock className="h-5 w-5 text-blue-400 mx-auto mb-1" />
-                    <div className="text-white font-semibold text-sm">0</div>
+                    <div className="text-white font-semibold text-sm">
+                      {watchlistCount !== null ? watchlistCount : "--"} {/* Display count or placeholder */}
+                    </div>
                     <div className="text-gray-400 text-xs">Watchlist</div>
+                  </div>
+                </Link>
+                <Link href="/readlist" onClick={() => setIsOpen(false)}>
+                  <div className="hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer">
+                    <BookOpen className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
+                    <div className="text-white font-semibold text-sm">
+                      {readlistCount !== null ? readlistCount : "--"} {/* Display count or placeholder */}
+                    </div>
+                    <div className="text-gray-400 text-xs">Readlist</div>
                   </div>
                 </Link>
                 <Link href="/favorites" onClick={() => setIsOpen(false)}>
                   <div className="hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer">
                     <Heart className="h-5 w-5 text-pink-400 mx-auto mb-1" />
-                    <div className="text-white font-semibold text-sm">0</div>
+                    <div className="text-white font-semibold text-sm">
+                      {favoritesCount !== null ? favoritesCount : "--"} {/* Display count or placeholder */}
+                    </div>
                     <div className="text-gray-400 text-xs">Favorites</div>
                   </div>
                 </Link>
                 <Link href="/friends" onClick={() => setIsOpen(false)}>
                   <div className="hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer">
                     <Users className="h-5 w-5 text-green-400 mx-auto mb-1" />
-                    <div className="text-white font-semibold text-sm">0</div>
+                    <div className="text-white font-semibold text-sm">
+                      {friendsCount !== null ? friendsCount : "--"} {/* Display count or placeholder */}
+                    </div>
                     <div className="text-gray-400 text-xs">Friends</div>
                   </div>
                 </Link>
