@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb"; // Your DB connection utility
 import { FavoriteItemModel } from "@/models/FavoriteItem"; // Your FavoriteItem model
-import { ReadingListItemModel } from "@/models/ReadingListItem"; // Your ReadingListItem model
+import { ReadingListItemModel } from "@/models/ReadlistItem"; // Your ReadingListItem model
 import { WatchlistItemModel } from "@/models/WatchlistItem"; // Your WatchlistItem model
 import { getSession } from "@/lib/session-store"; // Your session store utility
 import mongoose from "mongoose"; // Needed for mongoose.Types.ObjectId
