@@ -1,5 +1,6 @@
 // @/app/favorites/page.tsx
 "use client"; // This must be at the very top of the file
+import Loading from './loading';
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -308,9 +309,7 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading favorites...
-      </div>
+    <Loading />
     );
   }
 

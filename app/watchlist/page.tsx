@@ -1,5 +1,6 @@
 // /app/watchlist/page.tsx
 "use client";
+import Loading from './loading';
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -448,9 +449,7 @@ export default function WatchlistPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading watchlist...
-      </div>
+       <Loading />
     );
   }
 
