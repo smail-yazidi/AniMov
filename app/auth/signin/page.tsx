@@ -44,10 +44,15 @@ export default function SignInPage() {
       // احفظ الـ sessionId في localStorage
       localStorage.setItem("sessionId", data.sessionId)
 
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      })
+     toast({
+  title: "Welcome back!",
+  description: "You have successfully signed in.",
+  className: "text-white", // for text visibility
+  style: {
+    backgroundColor: "hsl(328.1, 78.4%, 60%)"
+  }
+})
+
 
       router.push("/")
     } catch (err) {
