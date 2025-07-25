@@ -115,64 +115,71 @@ useEffect(() => {
       setIsInFavorites(false);
     }
   };
+const checkIfInWatchlist = async () => {
+  const contentId = getContentId(item, type);
+  if (!item || !contentId || !type) return;
 
-  const checkIfInWatchlist = async () => {
-    const contentId = getContentId(item, type); // Use helper here too
-    if (!item || !contentId || !type) return; // Check contentId
+  // Only check watchlist for appropriate types
+  if (type !== 'movie' && type !== 'tv') {
+    setIsInWatchlist(false);
+    return;
+  }
 
-    try {
-      const sessionId = localStorage.getItem("sessionId");
-      if (!sessionId) {
-        setIsInWatchlist(false);
-        return;
-      }
-
-      const watchRes = await fetch(
-        `/api/watchlist/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
-        {
-          headers: {
-            Authorization: `Bearer ${sessionId}`,
-          },
-        }
-      );
-      const watchData = await watchRes.json();
-      setIsInWatchlist(watchData.inWatchlist);
-    } catch (error) {
-      console.error("Failed to check watchlist:", error);
+  try {
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
       setIsInWatchlist(false);
+      return;
     }
-  };
 
-  const checkIfInReadingList = async () => {
-    const contentId = getContentId(item, type); // Use helper here too
-    if (!item || !contentId || !type) return; // Check contentId
-
-    try {
-      const sessionId = localStorage.getItem("sessionId");
-      if (!sessionId) {
-        setIsInReadingList(false);
-        return;
+    const watchRes = await fetch(
+      `/api/watchlist/check?contentId=${contentId}&contentType=${type}`,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
       }
+    );
+    const watchData = await watchRes.json();
+    setIsInWatchlist(watchData.inWatchlist);
+  } catch (error) {
+    console.error("Failed to check watchlist:", error);
+    setIsInWatchlist(false);
+  }
+};
 
-      if (type === 'book' || type === 'manga') { // Corrected: Check for both book and manga
-        const readRes = await fetch(
-          `/api/readlist/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
-          {
-            headers: {
-              Authorization: `Bearer ${sessionId}`,
-            },
-          }
-        );
-        const readData = await readRes.json();
-        setIsInReadingList(readData.inReadingList);
-      } else {
-        setIsInReadingList(false); // Not a reading type, so not in reading list
-      }
-    } catch (error) {
-      console.error("Failed to check reading list:", error);
+const checkIfInReadingList = async () => {
+  const contentId = getContentId(item, type);
+  if (!item || !contentId || !type) return;
+
+  // Only check reading list for books/manga
+  if (type !== 'book' && type !== 'manga') {
+    setIsInReadingList(false);
+    return;
+  }
+
+  try {
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
       setIsInReadingList(false);
+      return;
     }
-  };
+
+    const readRes = await fetch(
+      `/api/readlist/check?contentId=${contentId}&contentType=${type}`,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionId}`,
+        },
+      }
+    );
+    const readData = await readRes.json();
+    setIsInReadingList(readData.inReadingList);
+  } catch (error) {
+    console.error("Failed to check reading list:", error);
+    setIsInReadingList(false);
+  }
+};
 
   // Call all check functions
   checkIfInFavorites();
