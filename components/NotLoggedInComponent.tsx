@@ -18,14 +18,18 @@ export default function NotLoggedInComponent() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center p-8  text-white max-w-lg mx-auto my-12 ">
-    <h1 className="text-xl text-gray-300 max-w-2xl mx-auto text-white">Movies, TV Series, Anime, Manga, and Books - Everything you need in one place</h1> 
-      <p className="text-lg text-center mb-8 opacity-90">
-        Sign in or create an account to create your personal{" "}
-        <span className="font-semibold text-red-300">Favorites</span>,{" "}
-        <span className="font-semibold text-blue-300">Watchlist</span>, and{" "}
-        <span className="font-semibold text-green-300">Readlist</span>.
-      </p>
+ <div className="flex flex-col items-center justify-center px-6 py-12 text-white max-w-2xl mx-auto text-center">
+  <h1 className="text-3xl font-bold mb-4 leading-snug text-white">
+    All Your Favorites — Movies, TV Shows, Anime, Manga & Books
+  </h1>
+  <p className="text-lg text-gray-300 max-w-xl">
+    Sign in or create an account to manage your personal{" "}
+    <span className="font-semibold text-red-400">Favorites</span>,{" "}
+    <span className="font-semibold text-blue-400">Watchlist</span>, and{" "}
+    <span className="font-semibold text-green-400">Readlist</span>.
+  </p>
+
+
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-8 w-full max-w-xs"> {/* Adjusted for better layout */}
         <div className="flex flex-col items-center">
