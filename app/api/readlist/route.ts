@@ -180,7 +180,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
 // DELETE handler: Remove an item from the readlist
 export async function DELETE(req: Request) {
   console.log("DELETE /api/readlist called.");
@@ -192,23 +191,30 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Unauthorized: Invalid or missing session" }, { status: 401 });
     }
 
-    const body: { _id: string } = await req.json();
-    const { _id } = body;
+    const body = await req.json();
+    const { _id, contentId, contentType } = body;
 
-    if (!_id || !mongoose.Types.ObjectId.isValid(_id)) {
-      return NextResponse.json({ error: "Invalid or missing readlist item ID for deletion" }, { status: 400 });
+    let query: any = { userId: new mongoose.Types.ObjectId(userId) };
+
+    if (_id && mongoose.Types.ObjectId.isValid(_id)) {
+      query._id = new mongoose.Types.ObjectId(_id);
+    } else if (contentId && contentType) {
+      query.contentId = contentId;
+      query.contentType = contentType;
+    } else {
+      return NextResponse.json(
+        { error: "Invalid or missing parameters for deletion. Need either _id or both contentId and contentType" },
+        { status: 400 }
+      );
     }
 
-    const deleted = await ReadingListItemModel.findOneAndDelete({ // Updated model name
-      _id: new mongoose.Types.ObjectId(_id),
-      userId: new mongoose.Types.ObjectId(userId), // Security check
-    });
+    const deleted = await ReadingListItemModel.findOneAndDelete(query);
 
     if (!deleted) {
       return NextResponse.json({ error: "Readlist item not found or unauthorized to delete" }, { status: 404 });
     }
 
-    console.log(`Readlist item ${_id} successfully removed.`);
+    console.log(`Readlist item successfully removed.`);
     return NextResponse.json({ message: "Readlist item removed successfully" }, { status: 200 });
   } catch (error) {
     console.error("Error removing readlist item:", error);

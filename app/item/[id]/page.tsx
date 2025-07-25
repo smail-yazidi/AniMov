@@ -373,36 +373,40 @@ const handleAddToReadingList = async () => {
     let errorMessage;
 
     if (isInReadingList) {
- try {
-      const sessionId = localStorage.getItem("sessionId");
-  
-
-      const response = await fetch("/api/readlist", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionId}`,
-        },
-        body: JSON.stringify({
-          _id: contentId,
-                    contentType: type,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Server error response on remove readlist item:", errorData);
-        throw new Error(errorData.error || "Failed to remove item from readlist");
-      }
-
-    } catch (err: any) {
-      console.error("Error removing readlist item:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to remove item from readlist.",
-        variant: "destructive",
-      });
+  try {
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No session found");
     }
+
+    const response = await fetch("/api/readlist", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionId}`,
+      },
+      body: JSON.stringify({
+        contentId: contentId,
+        contentType: type,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to remove item");
+    }
+
+    setIsInReadingList(false);
+    toast({ title: "Removed from reading list!" });
+  } catch (err: any) {
+    console.error("Error removing readlist item:", err);
+    toast({
+      title: "Error",
+      description: err.message || "Failed to remove item from readlist.",
+      variant: "destructive",
+    });
+  }
+
     } else {
       // If not in reading list, add it (POST)
       method = "POST";
