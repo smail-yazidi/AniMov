@@ -76,7 +76,7 @@ export default function ItemDetailPage() {
   const [isInFavorites, setIsInFavorites] = useState(false)
   const [isInReadingList, setIsInReadingList] = useState(false)
   const router = useRouter();
-
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
 
   const itemId = params.id as string
   const [type, id] = itemId.split("-")
@@ -86,13 +86,19 @@ useEffect(() => {
     if (!item || !contentId || !type) return; // Check contentId
 
     try {
-      const sessionId = localStorage.getItem("sessionId");
-      if (!sessionId) {
-        setIsInFavorites(false);
+
+             const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          setIsUserLoggedIn(false); 
+                  setIsInFavorites(false);
         setIsInWatchlist(false);
         setIsInReadingList(false);
-        return;
-      }
+              setLoading(false);
+           return; 
+        } else {
+          setIsUserLoggedIn(true); // <<< You set this state to true if logged in
+        }
+   
 
       const favRes = await fetch(
         `/api/favorites/check?contentId=${contentId}&contentType=${type}`, // Use contentId in URL
@@ -757,53 +763,70 @@ const handleAddToWatchlist = async () => {
 
                 <p className="text-gray-300 text-lg leading-relaxed mb-6">{item.overview || item.synopsis}</p>
                 {isBook && <p className="text-gray-300 text-lg leading-relaxed mb-6">{getBookDescription(item)}</p>}
-
-{/* Action Buttons */}
 <div className="flex flex-wrap gap-4">
 
-  {/* Favorites Button (general favorite, applies to any content type) */}
+  {/* Favorites Button */}
   <Button
     size="lg"
     variant="outline"
     className={`${isInFavorites ? "bg-pink-600 text-white" : "bg-transparent text-white border-white/30"}`}
-    onClick={handleAddToFavorites}
+    onClick={() => {
+      if (!isUserLoggedIn) {
+        window.location.href = "/auth/signin";
+        return;
+      }
+      handleAddToFavorites();
+    }}
   >
     <Heart className={`h-5 w-5 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
     {isInFavorites ? "In Favorites" : "Add to Favorites"}
   </Button>
 
-  {/* Watchlist Button (conditionally rendered for movies, TV series, anime) */}
+  {/* Watchlist Button */}
   {isWatchingContentType(type) && (
     <Button
       size="lg"
       variant="outline"
       className={`${isInWatchlist ? "bg-blue-600 text-white" : "bg-transparent text-white border-white/30"}`}
-      onClick={handleAddToWatchlist}
+      onClick={() => {
+        if (!isUserLoggedIn) {
+          window.location.href = "/auth/signin";
+          return;
+        }
+        handleAddToWatchlist();
+      }}
     >
-      <Eye className="h-5 w-5 mr-2" /> {/* Clear icon for watching */}
+      <Eye className="h-5 w-5 mr-2" />
       {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
     </Button>
   )}
 
-  {/* Reading List Button (conditionally rendered for books and manga) */}
+  {/* Reading List Button */}
   {isReadingContentType(type) && (
     <Button
       size="lg"
       variant="outline"
       className={`${isInReadingList ? "bg-orange-600 text-white" : "bg-transparent text-white border-white/30"}`}
-      onClick={handleAddToReadingList}
+      onClick={() => {
+        if (!isUserLoggedIn) {
+          window.location.href = "/auth/signin";
+          return;
+        }
+        handleAddToReadingList();
+      }}
     >
-      <BookOpen className="h-5 w-5 mr-2" /> {/* Clear icon for reading */}
+      <BookOpen className="h-5 w-5 mr-2" />
       {isInReadingList ? "In Reading List" : "Add to Reading List"}
     </Button>
   )}
 
-  {/* Share Button (always present) */}
+  {/* Share Button */}
   <Button size="lg" variant="outline" className="bg-transparent text-white border-white/30">
     <Share2 className="h-5 w-5 mr-2" />
     Share
   </Button>
 </div>
+
               </div>
             </div>
           </div>
