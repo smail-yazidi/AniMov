@@ -87,7 +87,7 @@ export default function ReadlistPage() {
   const categories = [
  
   { id: "manga", name: "Manga", icon: BookOpen, color: "bg-orange-500", urlType: "manga" },
-  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "book" },
+  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "books" },
 ]
   useEffect(() => {
     async function fetchReadlistAndDetails() {

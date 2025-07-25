@@ -62,11 +62,11 @@ export default function FavoritesPage() {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
 
 const categories = [
-  { id: "movies", name: "Movies", icon: Film, color: "bg-red-500", urlType: "movie" },
-  { id: "series", name: "TV Series", icon: Tv, color: "bg-blue-500", urlType: "tv" },
+  { id: "movies", name: "Movies", icon: Film, color: "bg-red-500", urlType: "movies" },
+  { id: "series", name: "TV Series", icon: Tv, color: "bg-blue-500", urlType: "series" },
   { id: "anime", name: "Anime", icon: Play, color: "bg-purple-500", urlType: "anime" },
-  { id: "manga", name: "Manga", icon: BookOpen, color: "bg-orange-500", urlType: "manga" },
-  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "book" },
+  { id: "manga", name: "Manga", icon: BookOpen, color: "bg-orange-500", urlType: "anime" },
+  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "books" },
 ]
   useEffect(() => {
     async function fetchFavoritesAndDetails() {
