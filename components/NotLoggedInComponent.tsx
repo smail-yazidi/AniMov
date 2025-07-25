@@ -36,17 +36,23 @@ export default function NotLoggedInComponent() {
   const [typedList, setTypedList] = useState("");
 
   useEffect(() => {
-    let charIndex = 0;
     const current = categories[categoryIndex].name;
-    setTypedCategory("");
+    let charIndex = 0; // Start at 0
+
+    // Set the first character immediately to avoid "undefined" or missing first char
+    if (current.length > 0) {
+      setTypedCategory(current[charIndex]);
+      charIndex++; // Increment for the next character to be typed
+    } else {
+      setTypedCategory(""); // Handle empty string case
+    }
+
 
     const interval = setInterval(() => {
-      // Check if charIndex is within bounds BEFORE appending
       if (charIndex < current.length) {
         setTypedCategory((prev) => prev + current[charIndex]);
         charIndex++;
       } else {
-        // If charIndex is out of bounds, clear interval and prepare for next category
         clearInterval(interval);
         setTimeout(() => {
           setCategoryIndex((prev) => (prev + 1) % categories.length);
@@ -58,17 +64,23 @@ export default function NotLoggedInComponent() {
   }, [categoryIndex]);
 
   useEffect(() => {
-    let charIndex = 0;
     const current = listTypes[listTypeIndex].name;
-    setTypedList("");
+    let charIndex = 0; // Start at 0
+
+    // Set the first character immediately
+    if (current.length > 0) {
+      setTypedList(current[charIndex]);
+      charIndex++; // Increment for the next character to be typed
+    } else {
+      setTypedList(""); // Handle empty string case
+    }
+
 
     const interval = setInterval(() => {
-      // Check if charIndex is within bounds BEFORE appending
       if (charIndex < current.length) {
         setTypedList((prev) => prev + current[charIndex]);
         charIndex++;
       } else {
-        // If charIndex is out of bounds, clear interval and prepare for next list type
         clearInterval(interval);
         setTimeout(() => {
           setListTypeIndex((prev) => (prev + 1) % listTypes.length);
