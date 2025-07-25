@@ -394,27 +394,45 @@ export default function FavoritesPage() {
               </Badge>
             </div>
 
-            {/* Filter Buttons */}
-            <div className="flex items-center gap-4">
-              <Filter className="h-5 w-5 text-gray-400" />
-              <div className="flex gap-2">
-                {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
-                  <Button
-                    key={type}
-                    variant={selectedType === type ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedType(type)}
-                    className={
-                      selectedType === type
-                        ? "bg-purple-600 hover:bg-purple-700"
-                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    }
-                  >
-                    {type === "all" ? "All" : getTypeLabel(type)}
-                  </Button>
-                ))}
-              </div>
-            </div>
+  {/* Filter Buttons / Dropdown */}
+<div className="flex items-center gap-4">
+  <Filter className="h-5 w-5 text-gray-400" />
+
+  {/* Dropdown for mobile (small screens) */}
+  <div className="block md:hidden">
+    <select
+      value={selectedType}
+      onChange={(e) => setSelectedType(e.target.value)}
+      className="bg-white/10 border border-white/20 text-white p-2 rounded"
+    >
+      {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
+        <option key={type} value={type}>
+          {type === "all" ? "All" : getTypeLabel(type)}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Button group for desktop (medium and up) */}
+  <div className="hidden md:flex gap-2">
+    {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
+      <Button
+        key={type}
+        variant={selectedType === type ? "default" : "outline"}
+        size="sm"
+        onClick={() => setSelectedType(type)}
+        className={
+          selectedType === type
+            ? "bg-purple-600 hover:bg-purple-700"
+            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+        }
+      >
+        {type === "all" ? "All" : getTypeLabel(type)}
+      </Button>
+    ))}
+  </div>
+</div>
+
           </div>
         </header>
 
