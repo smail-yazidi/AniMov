@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Star, Calendar, Trash2, Filter, Search } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { toast } from "@/components/ui/use-toast"; // Assuming shadcn/ui toast
+import NotLoggedInComponent from "@/components/NotLoggedInComponent"; // Import the new component
+import UserDropdown from "@/components/NotLoggedInComponent"; // Import the new component
 
 // API Imports - Adjust paths if different in your project
 // Corrected import to use getMovieDetails and getTVShowDetails
@@ -43,17 +45,22 @@ export default function FavoritesPage() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
   useEffect(() => {
     async function fetchFavoritesAndDetails() {
       try {
         setLoading(true);
         setError(null);
 
-        const sessionId = localStorage.getItem("sessionId");
+              const sessionId = localStorage.getItem("sessionId");
         if (!sessionId) {
-          throw new Error("No session found. Please log in.");
+          setIsUserLoggedIn(false); 
+              setLoading(false);
+           return; 
+        } else {
+          setIsUserLoggedIn(true); // <<< You set this state to true if logged in
         }
+
 
         // 1. Fetch raw favorite items (contentId, contentType, _id) from your backend
         const response = await fetch("/api/favorites", {
@@ -311,6 +318,33 @@ export default function FavoritesPage() {
     return (
     <Loading />
     );
+  }
+    // <<< HERE IS WHERE YOU USE THE isUserLoggedIn STATE TO CONDITIONALY RENDER
+  if (!isUserLoggedIn) { // If the check above determined the user is NOT logged in
+    return      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative"><Sidebar />  {/* Main App Header */}
+        {/* Header */}
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-30">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 ml-12">
+              <h1 className="text-2xl font-bold text-white">AniMov</h1>
+            </div>
+
+            <div className="flex items-center gap-4">
+            {/*   <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10"
+                onClick={() => setIsSearchOpen(true)}
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+
+              <UserDropdown /> */}
+            </div>
+          </div>
+        </div>
+      </header><NotLoggedInComponent /></div> ; // Render the "not logged in" message
   }
 
   if (error) {
