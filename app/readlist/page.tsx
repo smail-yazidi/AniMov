@@ -6,6 +6,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import NotLoggedInComponent from "@/components/NotLoggedInComponent"; // Import the new component
+
+
 import {
   BookOpen,
   Book,
@@ -79,7 +82,7 @@ export default function ReadlistPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
   useEffect(() => {
     async function fetchReadlistAndDetails() {
       try {
@@ -88,7 +91,11 @@ export default function ReadlistPage() {
 
         const sessionId = localStorage.getItem("sessionId");
         if (!sessionId) {
-          throw new Error("No session found. Please log in.");
+          setIsUserLoggedIn(false); 
+              setLoading(false);
+           return; 
+        } else {
+          setIsUserLoggedIn(true); // <<< You set this state to true if logged in
         }
 
         // 1. Fetch raw readlist items from your backend
@@ -469,6 +476,10 @@ export default function ReadlistPage() {
     return (
           <Loading />
     );
+  }
+    // <<< HERE IS WHERE YOU USE THE isUserLoggedIn STATE TO CONDITIONALY RENDER
+  if (!isUserLoggedIn) { // If the check above determined the user is NOT logged in
+    return <NotLoggedInComponent />; // Render the "not logged in" message
   }
 
   if (error) {
