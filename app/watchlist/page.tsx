@@ -506,11 +506,7 @@ export default function WatchlistPage() {
             <div className="flex items-center gap-4 ml-12">
               <h1 className="text-2xl font-bold text-white">AniMov</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <Search className="h-5 w-5" />
-              </Button>
-            </div>
+        
           </div>
         </div>
       </header>

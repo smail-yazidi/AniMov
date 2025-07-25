@@ -478,6 +478,7 @@ export default function ReadlistPage() {
           <Loading />
     );
   }
+  console.log(isUserLoggedIn)
     // <<< HERE IS WHERE YOU USE THE isUserLoggedIn STATE TO CONDITIONALY RENDER
   if (!isUserLoggedIn) { // If the check above determined the user is NOT logged in
     return      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative"><Sidebar />  {/* Main App Header */}
@@ -526,11 +527,6 @@ export default function ReadlistPage() {
                <h1 className="text-2xl font-bold text-white">AniMov</h1>
              </div>
  
-             <div className="flex items-center gap-4">
-           
- 
-               <UserDropdown />
-             </div>
            </div>
          </div>
        </header>
