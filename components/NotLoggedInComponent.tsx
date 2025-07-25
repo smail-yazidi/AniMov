@@ -21,7 +21,7 @@ export default function NotLoggedInComponent() {
     <div className="flex flex-col items-center justify-center p-8  text-white max-w-lg mx-auto my-12 ">
      
       <p className="text-lg text-center mb-8 opacity-90">
-        Sign in or create an account to curate your personal{" "}
+        Sign in or create an account to create your personal{" "}
         <span className="font-semibold text-red-300">Favorites</span>,{" "}
         <span className="font-semibold text-blue-300">Watchlist</span>, and{" "}
         <span className="font-semibold text-green-300">Readlist</span>.
@@ -51,21 +51,27 @@ export default function NotLoggedInComponent() {
         {/* Empty div for grid alignment if needed for 2-column layout on small screens */}
         <div className="hidden sm:flex" /> 
       </div>
+<div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+  <Button
+    asChild
+    className="w-full text-white bg-[hsl(328.1,78.4%,60%)] hover:brightness-110"
+  >
+    <Link href="/auth/signin">
+      <LogIn className="mr-2 h-5 w-5" /> Sign In
+    </Link>
+  </Button>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-        <Button asChild     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              >
-          <Link href="/auth/signin">
-            <LogIn className="mr-2 h-5 w-5" /> Sign In
-          </Link>
-        </Button>
-        <Button asChild variant="outline"     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              >
-          <Link href="/auth/signup">
-            Create Account
-          </Link>
-        </Button>
-      </div>
+  <Button
+    asChild
+    variant="outline"
+    className="w-full text-white bg-[hsl(328.1,78.4%,60%)] hover:brightness-110 border-none"
+  >
+    <Link href="/auth/signup">
+      Create Account
+    </Link>
+  </Button>
+</div>
+
 
       <p className="mt-8 text-sm opacity-75">
         It's quick, easy, and completely free!
