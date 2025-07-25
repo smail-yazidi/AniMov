@@ -646,13 +646,14 @@ export default function WatchlistPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredWatchlist.map((item) => (
-                     <Link key={item.id} href={`/item/${item.type}-${item.id}`}>
+                  
                 <Card
                   key={item._id}
                   className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20 transition-all duration-300 group"
                 >
                   <CardContent className="p-0">
                     <div className="relative overflow-hidden rounded-t-lg">
+                         <Link key={item.id} href={`/item/${item.type}-${item.id}`}>
                       <img
                         src={item.poster || "/placeholder.svg"}
                         alt={item.title}
@@ -671,7 +672,7 @@ export default function WatchlistPage() {
                         <Badge className={`${getStatusColor(item.status)} text-white`}>
                           {getStatusIcon(item.status)} {getStatusLabel(item.status)}
                         </Badge>
-                      </div>
+                      </div></Link>
                       <div className="absolute bottom-2 right-2">
                         <Button
                           size="sm"
