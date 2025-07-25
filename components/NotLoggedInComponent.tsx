@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
@@ -43,9 +41,12 @@ export default function NotLoggedInComponent() {
     setTypedCategory("");
 
     const interval = setInterval(() => {
-      setTypedCategory((prev) => prev + current[charIndex]);
-      charIndex++;
-      if (charIndex === current.length) {
+      // Check if charIndex is within bounds BEFORE appending
+      if (charIndex < current.length) {
+        setTypedCategory((prev) => prev + current[charIndex]);
+        charIndex++;
+      } else {
+        // If charIndex is out of bounds, clear interval and prepare for next category
         clearInterval(interval);
         setTimeout(() => {
           setCategoryIndex((prev) => (prev + 1) % categories.length);
@@ -62,9 +63,12 @@ export default function NotLoggedInComponent() {
     setTypedList("");
 
     const interval = setInterval(() => {
-      setTypedList((prev) => prev + current[charIndex]);
-      charIndex++;
-      if (charIndex === current.length) {
+      // Check if charIndex is within bounds BEFORE appending
+      if (charIndex < current.length) {
+        setTypedList((prev) => prev + current[charIndex]);
+        charIndex++;
+      } else {
+        // If charIndex is out of bounds, clear interval and prepare for next list type
         clearInterval(interval);
         setTimeout(() => {
           setListTypeIndex((prev) => (prev + 1) % listTypes.length);
@@ -78,13 +82,17 @@ export default function NotLoggedInComponent() {
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
 
+  // Destructure the icon components for easier use in JSX
+  const CategoryIcon = CurrentCategory.icon;
+  const ListIcon = CurrentList.icon;
+
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-white max-w-2xl mx-auto text-center">
       {/* Heading with typing effect */}
       <h1 className="text-3xl font-bold mb-4 leading-snug text-white">
         All Your Favorites{" "}
         <span className={`inline-flex items-center gap-2 ${CurrentCategory.color}`}>
-          <CurrentCategory.icon className="w-6 h-6" />
+          <CategoryIcon className="w-6 h-6" />
           <span className="min-w-[6ch]">{typedCategory}</span>
         </span>
       </h1>
@@ -93,7 +101,7 @@ export default function NotLoggedInComponent() {
       <p className="text-lg text-gray-300 max-w-xl min-h-[3rem]">
         Sign in or create an account to manage your personal{" "}
         <span className={`inline-flex items-center gap-1 ${CurrentList.color}`}>
-          <CurrentList.icon className="w-5 h-5" />
+          <ListIcon className="w-5 h-5" />
           <span className="min-w-[6ch]">{typedList}</span>
         </span>
       </p>
