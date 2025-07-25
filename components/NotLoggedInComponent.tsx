@@ -18,11 +18,8 @@ export default function NotLoggedInComponent() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-black/40 backdrop-blur-md rounded-lg shadow-xl text-white max-w-lg mx-auto my-12 border border-white/10">
-      <Lock className="h-16 w-16 text-red-400 mb-6" />
-      <h2 className="text-3xl font-bold mb-4 text-center">
-        Access Exclusive Features!
-      </h2>
+    <div className="flex flex-col items-center justify-center p-8  text-white max-w-lg mx-auto my-12 ">
+     
       <p className="text-lg text-center mb-8 opacity-90">
         Sign in or create an account to curate your personal{" "}
         <span className="font-semibold text-red-300">Favorites</span>,{" "}
@@ -56,12 +53,14 @@ export default function NotLoggedInComponent() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 w-full sm:w-auto">
+        <Button asChild     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
           <Link href="/auth/signin">
             <LogIn className="mr-2 h-5 w-5" /> Sign In
           </Link>
         </Button>
-        <Button asChild variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 w-full sm:w-auto">
+        <Button asChild variant="outline"     className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
           <Link href="/auth/signup">
             Create Account
           </Link>
