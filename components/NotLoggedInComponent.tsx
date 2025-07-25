@@ -13,6 +13,7 @@ import {
   Share2,
   Star,
   Tv,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +37,6 @@ export default function NotLoggedInComponent() {
   const [typedCategory, setTypedCategory] = useState("");
   const [typedList, setTypedList] = useState("");
 
-  // Typing effect for categories
   useEffect(() => {
     let charIndex = 0;
     const current = categories[categoryIndex].name;
@@ -56,7 +56,6 @@ export default function NotLoggedInComponent() {
     return () => clearInterval(interval);
   }, [categoryIndex]);
 
-  // Typing effect for list types
   useEffect(() => {
     let charIndex = 0;
     const current = listTypes[listTypeIndex].name;
@@ -83,69 +82,54 @@ export default function NotLoggedInComponent() {
     <div className="flex flex-col items-center justify-center px-6 py-12 text-white max-w-2xl mx-auto text-center">
       {/* Heading with typing effect */}
       <h1 className="text-3xl font-bold mb-4 leading-snug text-white">
-        All Your Favorites{"  "}
+        All Your Favorites{" "}
         <span className={`inline-flex items-center gap-2 ${CurrentCategory.color}`}>
           <CurrentCategory.icon className="w-6 h-6" />
           <span className="min-w-[6ch]">{typedCategory}</span>
         </span>
       </h1>
 
-      {/* Typing effect for sign-in sentence */}
+      {/* Sign-in sentence with list typing */}
       <p className="text-lg text-gray-300 max-w-xl min-h-[3rem]">
-        Sign in or create an account to manage your personal{"  "}
+        Sign in or create an account to manage your personal{" "}
         <span className={`inline-flex items-center gap-1 ${CurrentList.color}`}>
           <CurrentList.icon className="w-5 h-5" />
           <span className="min-w-[6ch]">{typedList}</span>
         </span>
       </p>
 
-      {/* Feature Icons */}
+      {/* Feature icons grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 my-8 w-full max-w-xs">
-        <div className="flex flex-col items-center">
-          <Heart className="h-8 w-8 text-red-500" />
-          <span className="text-sm mt-1 text-gray-300">Favorites</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Clock className="h-8 w-8 text-blue-500" />
-          <span className="text-sm mt-1 text-gray-300">Watchlist</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <BookOpen className="h-8 w-8 text-green-500" />
-          <span className="text-sm mt-1 text-gray-300">Readlist</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Star className="h-8 w-8 text-yellow-500" />
-          <span className="text-sm mt-1 text-gray-300">Ratings</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Share2 className="h-8 w-8 text-purple-500" />
-          <span className="text-sm mt-1 text-gray-300">Sharing</span>
-        </div>
-        <div className="hidden sm:flex" />
+        <Feature icon={Heart} label="Favorites" color="text-red-500" />
+        <Feature icon={Clock} label="Watchlist" color="text-blue-500" />
+        <Feature icon={BookOpen} label="Readlist" color="text-green-500" />
+        <Feature icon={Star} label="Ratings" color="text-yellow-500" />
+        <Feature icon={Share2} label="Sharing" color="text-purple-500" />
+        <Feature icon={Users} label="Friends" color="text-pink-400" />
       </div>
 
-      {/* Auth Buttons (no hover effect) */}
+      {/* Auth buttons */}
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-        <Button
-          asChild
-          className="w-full text-white bg-[hsl(328.1,78.4%,60%)]"
-        >
+        <Button asChild className="w-full text-white bg-[hsl(328.1,78.4%,60%)]">
           <Link href="/auth/signin">
             <LogIn className="mr-2 h-5 w-5" /> Sign In
           </Link>
         </Button>
-
-        <Button
-          asChild
-          className="w-full text-white bg-[hsl(328.1,78.4%,60%)] border-none"
-        >
+        <Button asChild className="w-full text-white bg-[hsl(328.1,78.4%,60%)] border-none">
           <Link href="/auth/signup">Create Account</Link>
         </Button>
       </div>
 
-      <p className="mt-8 text-sm opacity-75">
-        It's quick, easy, and completely free!
-      </p>
+      <p className="mt-8 text-sm opacity-75">It's quick, easy, and completely free!</p>
+    </div>
+  );
+}
+
+function Feature({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <Icon className={`h-8 w-8 ${color}`} />
+      <span className="text-sm mt-1 text-gray-300">{label}</span>
     </div>
   );
 }
