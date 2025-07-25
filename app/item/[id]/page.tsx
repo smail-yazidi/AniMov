@@ -74,7 +74,7 @@ export default function ItemDetailPage() {
   const [userComment, setUserComment] = useState("")
   const [isInWatchlist, setIsInWatchlist] = useState(false)
   const [isInFavorites, setIsInFavorites] = useState(false)
-  const [isInReadingList, setIsInReadingList] = useState(false)
+const [isInReadingList, setIsInReadingList] = useState<boolean>(false); // Initialize as false
   const router = useRouter();
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
 
@@ -147,12 +147,14 @@ const checkIfInWatchlist = async () => {
     setIsInWatchlist(false);
   }
 };
-
 const checkIfInReadingList = async () => {
   const contentId = getContentId(item, type);
-  if (!item || !contentId || !type) return;
+  if (!item || !contentId || !type) {
+    setIsInReadingList(false);
+    return;
+  }
 
-  // Only check reading list for books/manga
+  // Only check for book or manga types
   if (type !== 'book' && type !== 'manga') {
     setIsInReadingList(false);
     return;
@@ -165,18 +167,23 @@ const checkIfInReadingList = async () => {
       return;
     }
 
-    const readRes = await fetch(
-      `/api/readlist/check?contentId=${contentId}&contentType=${type}`,
+    const response = await fetch(
+      `/api/readlist?contentId=${contentId}&contentType=${type}`,
       {
         headers: {
           Authorization: `Bearer ${sessionId}`,
         },
       }
     );
-    const readData = await readRes.json();
-    setIsInReadingList(readData.inReadingList);
+
+    if (!response.ok) {
+      throw new Error("Failed to check reading list");
+    }
+
+    const data = await response.json();
+    setIsInReadingList(data.inReadlist || false); // Ensure boolean value
   } catch (error) {
-    console.error("Failed to check reading list:", error);
+    console.error("Error checking reading list:", error);
     setIsInReadingList(false);
   }
 };
