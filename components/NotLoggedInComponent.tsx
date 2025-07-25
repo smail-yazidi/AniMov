@@ -33,43 +33,70 @@ const listTypes = [
 export default function NotLoggedInComponent() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [listTypeIndex, setListTypeIndex] = useState(0);
+  const [typedCategory, setTypedCategory] = useState("");
+  const [typedList, setTypedList] = useState("");
 
+  // Typing effect for categories
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCategoryIndex((prev) => (prev + 1) % categories.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    let charIndex = 0;
+    const current = categories[categoryIndex].name;
+    setTypedCategory("");
 
-  useEffect(() => {
     const interval = setInterval(() => {
-      setListTypeIndex((prev) => (prev + 1) % listTypes.length);
-    }, 2000);
+      setTypedCategory((prev) => prev + current[charIndex]);
+      charIndex++;
+      if (charIndex === current.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setCategoryIndex((prev) => (prev + 1) % categories.length);
+        }, 1500);
+      }
+    }, 100);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [categoryIndex]);
+
+  // Typing effect for list types
+  useEffect(() => {
+    let charIndex = 0;
+    const current = listTypes[listTypeIndex].name;
+    setTypedList("");
+
+    const interval = setInterval(() => {
+      setTypedList((prev) => prev + current[charIndex]);
+      charIndex++;
+      if (charIndex === current.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setListTypeIndex((prev) => (prev + 1) % listTypes.length);
+        }, 1500);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [listTypeIndex]);
 
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
 
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-white max-w-2xl mx-auto text-center">
-      {/* Fixed heading with typing content inside */}
+      {/* Heading with typing effect */}
       <h1 className="text-3xl font-bold mb-4 leading-snug text-white">
-        All Your Favorites —{" "}
+        All Your Favorites{"  "}
         <span className={`inline-flex items-center gap-2 ${CurrentCategory.color}`}>
           <CurrentCategory.icon className="w-6 h-6" />
-          {CurrentCategory.name}
+          <span className="min-w-[6ch]">{typedCategory}</span>
         </span>
       </h1>
 
       {/* Typing effect for sign-in sentence */}
       <p className="text-lg text-gray-300 max-w-xl min-h-[3rem]">
-        Sign in or create an account to manage your personal{" "}
+        Sign in or create an account to manage your personal{"  "}
         <span className={`inline-flex items-center gap-1 ${CurrentList.color}`}>
           <CurrentList.icon className="w-5 h-5" />
-          {CurrentList.name}
+          <span className="min-w-[6ch]">{typedList}</span>
         </span>
-        .
       </p>
 
       {/* Feature Icons */}
@@ -101,7 +128,7 @@ export default function NotLoggedInComponent() {
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
         <Button
           asChild
-          className="w-full text-white bg-[hsl(328.1,78.4%,60%)] brightness-100"
+          className="w-full text-white bg-[hsl(328.1,78.4%,60%)]"
         >
           <Link href="/auth/signin">
             <LogIn className="mr-2 h-5 w-5" /> Sign In
@@ -110,8 +137,7 @@ export default function NotLoggedInComponent() {
 
         <Button
           asChild
-          variant="outline"
-          className="w-full text-white bg-[hsl(328.1,78.4%,60%)] brightness-100 border-none"
+          className="w-full text-white bg-[hsl(328.1,78.4%,60%)] border-none"
         >
           <Link href="/auth/signup">Create Account</Link>
         </Button>
