@@ -240,7 +240,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
 <DialogContent
-  className="max-w-7xl max-h-[1200px] h-[600px] mt-[70px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
+  className="max-w-7xl max-h-[1000px] h-[700px] mt-[70px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
 >
    <DialogHeader className="h-[40px]">
   <DialogTitle className="text-white flex items-center gap-2 h-full">
@@ -252,7 +252,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search movies, TV shows, anime, manga, books..."
               value={searchTerm}
