@@ -56,7 +56,7 @@ const handleSignIn = async (e: React.FormEvent) => {
       }
     })
 
-    router.push(callbackUrl) // 👈 Redirects to where user came from
+    router.back()
   } catch (err) {
     setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
   } finally {
