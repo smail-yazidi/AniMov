@@ -68,13 +68,13 @@ const typeText = (
   let charIndex = 0;
   const textLength = textToType.length;
 
-  console.log(`[${typePrefix} Effect] Starting typing: "${textToType}"`);
+ // console.log(`[${typePrefix} Effect] Starting typing: "${textToType}"`);
 
   const typeNextChar = () => {
     if (charIndex < textLength) {
       const currentChar = textToType[charIndex];
       if (currentChar === undefined) {
-        console.error(`[${typePrefix} Error] Undefined character at index ${charIndex}`);
+       // console.error(`[${typePrefix} Error] Undefined character at index ${charIndex}`);
         charIndex++;
         timeoutRef.current = setTimeout(typeNextChar, 100);
         return;
@@ -82,14 +82,14 @@ const typeText = (
 
       setter((prev) => {
         const newText = prev + currentChar;
-        console.log(`[${typePrefix} Typing] Appending "${currentChar}", current: "${newText}"`);
+      //  console.log(`[${typePrefix} Typing] Appending "${currentChar}", current: "${newText}"`);
         return newText;
       });
 
       charIndex++;
       timeoutRef.current = setTimeout(typeNextChar, 100);
     } else {
-      console.log(`[${typePrefix} Finished] Completed: "${textToType}"`);
+     // console.log(`[${typePrefix} Finished] Completed: "${textToType}"`);
       timeoutRef.current = setTimeout(() => {
         currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
       }, 1500);
@@ -102,7 +102,7 @@ const typeText = (
   // Effect for typing categories
   useEffect(() => {
     const currentCategoryName = categories[categoryIndex].name;
-    console.log(`[Category Effect] useEffect triggered for categoryIndex: ${categoryIndex}, word: "${currentCategoryName}"`);
+   // console.log(`[Category Effect] useEffect triggered for categoryIndex: ${categoryIndex}, word: "${currentCategoryName}"`);
 
     typeText(
       currentCategoryName,
@@ -114,7 +114,7 @@ const typeText = (
     );
 
     return () => {
-      console.log("[Category Effect] Cleanup: Clearing category timeout on unmount/re-render.");
+    //  console.log("[Category Effect] Cleanup: Clearing category timeout on unmount/re-render.");
       if (categoryTimeoutRef.current) {
         clearTimeout(categoryTimeoutRef.current);
       }
@@ -124,7 +124,7 @@ const typeText = (
   // Effect for typing list types
   useEffect(() => {
     const currentListName = listTypes[listTypeIndex].name;
-    console.log(`[List Effect] useEffect triggered for listTypeIndex: ${listTypeIndex}, word: "${currentListName}"`);
+  //  console.log(`[List Effect] useEffect triggered for listTypeIndex: ${listTypeIndex}, word: "${currentListName}"`);
 
     typeText(
       currentListName,
@@ -136,7 +136,7 @@ const typeText = (
     );
 
     return () => {
-      console.log("[List Effect] Cleanup: Clearing list timeout on unmount/re-render.");
+    //  console.log("[List Effect] Cleanup: Clearing list timeout on unmount/re-render.");
       if (listTimeoutRef.current) {
         clearTimeout(listTimeoutRef.current);
       }
