@@ -42,11 +42,15 @@ export default function SignUpPage() {
       if (!response.ok) {
         throw new Error(data.error || "Sign up failed")
       }
+toast({
+  title: "Account created!",
+  description: "Your account has been successfully created.",
+  className: "text-white", // ensures the text is readable
+  style: {
+    backgroundColor: "hsl(328.1, 78.4%, 60%)"
+  }
+})
 
-      toast({
-        title: "Account created!",
-        description: "Your account has been successfully created.",
-      })
 
       // Redirect to sign in page after successful sign up
       router.push("/auth/signin")
