@@ -183,11 +183,11 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         ) : (
           <div className="p-4 border-t border-white/10">
-            <Link href="/auth/signin" onClick={closeSidebar}>
+           {/*  <Link href="/auth/signin" onClick={closeSidebar}>
               <Button variant="outline" className="w-full"    style={{ backgroundColor: "hsl(328.1, 78.4%, 60%)", color: "white" }}>
                 Sign In
               </Button>
-            </Link>
+            </Link> */}
           </div>
         )}
       </aside>

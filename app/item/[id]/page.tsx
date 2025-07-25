@@ -41,7 +41,7 @@ import {
 import { jikanApi, type JikanAnime, type JikanManga } from "@/lib/jikan-api"
 import { googleBooksApi, type GoogleBook, getBookImageUrl, getBookDescription } from "@/lib/google-books-api"
 import { Sidebar } from "@/components/sidebar"
-
+import { Info, Users, MessageSquare, Copy } from 'lucide-react';
 // Sample friends comments (you can replace this with real data later)
 const friendsComments = [
   {
@@ -836,20 +836,36 @@ const handleAddToWatchlist = async () => {
       {/* Detailed Information Tabs */}
       <section className="container mx-auto px-4 py-12">
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-md">
-            <TabsTrigger value="details" className="data-[state=active]:bg-white/20">
-              Details
-            </TabsTrigger>
-            <TabsTrigger value="cast" className="data-[state=active]:bg-white/20">
-              Cast & Crew
-            </TabsTrigger>
-            <TabsTrigger value="comments" className="data-[state=active]:bg-white/20">
-              Comments ({friendsComments.length})
-            </TabsTrigger>
-            <TabsTrigger value="related" className="data-[state=active]:bg-white/20">
-              Similar
-            </TabsTrigger>
-          </TabsList>
+      <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-md">
+  <TabsTrigger value="details" className="data-[state=active]:bg-white/20">
+    <div className="flex items-center justify-center gap-2">
+      <Info className="h-4 w-4 md:h-5 md:w-5" />
+      <span className="hidden sm:inline">Details</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="cast" className="data-[state=active]:bg-white/20">
+    <div className="flex items-center justify-center gap-2">
+      <Users className="h-4 w-4 md:h-5 md:w-5" />
+      <span className="hidden sm:inline">Cast & Crew</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="comments" className="data-[state=active]:bg-white/20">
+    <div className="flex items-center justify-center gap-2">
+      <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
+      <span className="hidden sm:inline">Comments</span>
+      <span className="hidden sm:inline">({friendsComments.length})</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="related" className="data-[state=active]:bg-white/20">
+    <div className="flex items-center justify-center gap-2">
+      <Copy className="h-4 w-4 md:h-5 md:w-5" />
+      <span className="hidden sm:inline">Similar</span>
+    </div>
+  </TabsTrigger>
+</TabsList>
 
           {/* Details Tab */}
           <TabsContent value="details" className="mt-8">
