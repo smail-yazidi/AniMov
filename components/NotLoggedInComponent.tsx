@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react"; // Import useRef
+import { useState, useEffect, useRef } from "react";
 import {
   Book,
   BookOpen,
@@ -37,7 +37,6 @@ export default function NotLoggedInComponent() {
   const [typedCategory, setTypedCategory] = useState("");
   const [typedList, setTypedList] = useState("");
 
-  // Use refs to store timeout IDs so we can clear them reliably
   const categoryTimeoutRef = useRef(null);
   const listTimeoutRef = useRef(null);
 
@@ -47,33 +46,47 @@ export default function NotLoggedInComponent() {
     setter,
     currentIndexSetter,
     totalItemsLength,
-    timeoutRef
+    timeoutRef,
+    typePrefix // Added for console logging clarity (e.g., "Category", "List")
   ) => {
     let charIndex = 0;
     setter(""); // Clear the text at the beginning of a new word
 
+    console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
+
     const typeNextChar = () => {
+      console.log(`[${typePrefix} Timer] charIndex: ${charIndex}, textToType.length: ${textToType.length}`);
+
       if (charIndex < textToType.length) {
-        setter((prev) => prev + textToType[charIndex]);
+        // Only append if there's a character to append
+        setter((prev) => {
+          const newText = prev + textToType[charIndex];
+          console.log(`[${typePrefix} Typing] Appending "${textToType[charIndex]}", current typed: "${newText}"`);
+          return newText;
+        });
         charIndex++;
         timeoutRef.current = setTimeout(typeNextChar, 100); // Schedule next char
       } else {
-        // Word is fully typed, wait, then move to next item
+        // Word is fully typed
+        console.log(`[${typePrefix} Finished] Word "${textToType}" fully typed.`);
         timeoutRef.current = setTimeout(() => {
+          console.log(`[${typePrefix} Next Item] Moving to next item.`);
           currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
-        }, 1500);
+        }, 1500); // Delay before moving to next item
       }
     };
 
-    typeNextChar(); // Start typing immediately
+    // Start typing immediately
+    typeNextChar();
   };
 
   // Effect for typing categories
   useEffect(() => {
     const currentCategoryName = categories[categoryIndex].name;
+    console.log(`[Category Effect] useEffect triggered for categoryIndex: ${categoryIndex}, word: "${currentCategoryName}"`);
 
-    // Clear any existing timeout from a previous cycle before starting a new one
     if (categoryTimeoutRef.current) {
+      console.log("[Category Effect] Clearing previous category timeout.");
       clearTimeout(categoryTimeoutRef.current);
     }
 
@@ -82,24 +95,25 @@ export default function NotLoggedInComponent() {
       setTypedCategory,
       setCategoryIndex,
       categories.length,
-      categoryTimeoutRef
+      categoryTimeoutRef,
+      "Category" // Pass prefix for logging
     );
 
-    // Cleanup function: ensures timeout is cleared when component unmounts
-    // or when categoryIndex changes (and effect re-runs)
     return () => {
+      console.log("[Category Effect] Cleanup: Clearing category timeout on unmount/re-render.");
       if (categoryTimeoutRef.current) {
         clearTimeout(categoryTimeoutRef.current);
       }
     };
-  }, [categoryIndex]); // Dependency array: re-run when categoryIndex changes
+  }, [categoryIndex]);
 
   // Effect for typing list types
   useEffect(() => {
     const currentListName = listTypes[listTypeIndex].name;
+    console.log(`[List Effect] useEffect triggered for listTypeIndex: ${listTypeIndex}, word: "${currentListName}"`);
 
-    // Clear any existing timeout
     if (listTimeoutRef.current) {
+      console.log("[List Effect] Clearing previous list timeout.");
       clearTimeout(listTimeoutRef.current);
     }
 
@@ -108,37 +122,34 @@ export default function NotLoggedInComponent() {
       setTypedList,
       setListTypeIndex,
       listTypes.length,
-      listTimeoutRef
+      listTimeoutRef,
+      "List" // Pass prefix for logging
     );
 
-    // Cleanup function
     return () => {
+      console.log("[List Effect] Cleanup: Clearing list timeout on unmount/re-render.");
       if (listTimeoutRef.current) {
         clearTimeout(listTimeoutRef.current);
       }
     };
-  }, [listTypeIndex]); // Dependency array: re-run when listTypeIndex changes
+  }, [listTypeIndex]);
 
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
 
-  // Destructure the icon components for easier use in JSX
   const CategoryIcon = CurrentCategory.icon;
   const ListIcon = CurrentList.icon;
 
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-white max-w-2xl mx-auto text-center">
-      {/* Heading with typing effect */}
       <h1 className="text-3xl font-bold mb-4 leading-snug text-white">
         All Your Favorites{" "}
         <span className={`inline-flex items-center gap-2 ${CurrentCategory.color}`}>
           <CategoryIcon className="w-6 h-6" />
-          {/* Using min-w-min to ensure space for the word even if it's short */}
           <span className="min-w-min">{typedCategory}</span>
         </span>
       </h1>
 
-      {/* Sign-in sentence with list typing */}
       <p className="text-lg text-gray-300 max-w-xl min-h-[3rem]">
         Sign in or create an account to manage your personal{" "}
         <span className={`inline-flex items-center gap-1 ${CurrentList.color}`}>
@@ -147,7 +158,6 @@ export default function NotLoggedInComponent() {
         </span>
       </p>
 
-      {/* Feature icons grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 my-8 w-full max-w-xs">
         <Feature icon={Heart} label="Favorites" color="text-red-500" />
         <Feature icon={Clock} label="Watchlist" color="text-blue-500" />
@@ -157,7 +167,6 @@ export default function NotLoggedInComponent() {
         <Feature icon={Users} label="Friends" color="text-pink-400" />
       </div>
 
-      {/* Auth buttons */}
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
         <Button asChild className="w-full text-white bg-[hsl(328.1,78.4%,60%)]">
           <Link href="/auth/signin">
