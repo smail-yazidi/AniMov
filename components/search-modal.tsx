@@ -261,28 +261,47 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
           {searchTerm.trim() && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md">
-                <TabsTrigger value="movies" className="flex items-center gap-1 text-xs">
-                  <Film className="h-3 w-3" />
-                  Movies ({getResultCount("movies")})
-                </TabsTrigger>
-                <TabsTrigger value="tv" className="flex items-center gap-1 text-xs">
-                  <Tv className="h-3 w-3" />
-                  TV ({getResultCount("tv")})
-                </TabsTrigger>
-                <TabsTrigger value="anime" className="flex items-center gap-1 text-xs">
-                  <Play className="h-3 w-3" />
-                  Anime ({getResultCount("anime")})
-                </TabsTrigger>
-                <TabsTrigger value="manga" className="flex items-center gap-1 text-xs">
-                  <BookOpen className="h-3 w-3" />
-                  Manga ({getResultCount("manga")})
-                </TabsTrigger>
-                <TabsTrigger value="books" className="flex items-center gap-1 text-xs">
-                  <Book className="h-3 w-3" />
-                  Books ({getResultCount("books")})
-                </TabsTrigger>
-              </TabsList>
+           <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md">
+  <TabsTrigger value="movies" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <Film className="h-4 w-4 sm:h-3 sm:w-3" />
+      <span className="hidden sm:inline text-xs">Movies</span>
+      <span className="hidden sm:inline text-xs">({getResultCount("movies")})</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="tv" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <Tv className="h-4 w-4 sm:h-3 sm:w-3" />
+      <span className="hidden sm:inline text-xs">TV</span>
+      <span className="hidden sm:inline text-xs">({getResultCount("tv")})</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="anime" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <Play className="h-4 w-4 sm:h-3 sm:w-3" />
+      <span className="hidden sm:inline text-xs">Anime</span>
+      <span className="hidden sm:inline text-xs">({getResultCount("anime")})</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="manga" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <BookOpen className="h-4 w-4 sm:h-3 sm:w-3" />
+      <span className="hidden sm:inline text-xs">Manga</span>
+      <span className="hidden sm:inline text-xs">({getResultCount("manga")})</span>
+    </div>
+  </TabsTrigger>
+  
+  <TabsTrigger value="books" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <Book className="h-4 w-4 sm:h-3 sm:w-3" />
+      <span className="hidden sm:inline text-xs">Books</span>
+      <span className="hidden sm:inline text-xs">({getResultCount("books")})</span>
+    </div>
+  </TabsTrigger>
+</TabsList>
 
               <div className="mt-4 max-h-96 overflow-y-auto">
                 <TabsContent value="movies" className="mt-0">
