@@ -389,17 +389,17 @@ export default function FavoritesPage() {
                 {filteredFavorites.length} items
               </Badge>
             </div>
+{/* Filter Buttons */}
+<div className="flex flex-wrap items-center gap-4">
 
-  {/* Filter Buttons / Dropdown */}
-<div className="flex items-center gap-4">
   <Filter className="h-5 w-5 text-gray-400" />
 
-  {/* Dropdown for mobile (small screens) */}
-  <div className="block md:hidden">
+  {/* Mobile Dropdown */}
+  <div className="block md:hidden w-full">
     <select
       value={selectedType}
       onChange={(e) => setSelectedType(e.target.value)}
-      className="bg-white/10 border border-white/20 text-white p-2 rounded"
+      className="w-full bg-white/10 border border-white/20 text-white p-2 rounded"
     >
       {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
         <option key={type} value={type}>
@@ -409,8 +409,8 @@ export default function FavoritesPage() {
     </select>
   </div>
 
-  {/* Button group for desktop (medium and up) */}
-  <div className="hidden md:flex gap-2">
+  {/* Desktop Buttons */}
+  <div className="hidden md:flex gap-2 flex-wrap">
     {["all", "movie", "tv", "anime", "manga", "book"].map((type) => (
       <Button
         key={type}
@@ -427,7 +427,9 @@ export default function FavoritesPage() {
       </Button>
     ))}
   </div>
+
 </div>
+
 
           </div>
         </header>
