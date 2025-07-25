@@ -238,180 +238,175 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-<DialogContent
-  className="max-w-7xl max-h-[1000px] h-[700px] mt-[50px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
->
-   <DialogHeader className="h-[5px]">
-  <DialogTitle className="text-white flex items-center gap-2 h-full">
-    <Search className="h-5 w-5" />
-    Search Content
-  </DialogTitle>
-</DialogHeader>
+ <Dialog open={isOpen} onOpenChange={handleClose}>
+  <DialogContent className="max-w-4xl max-h-[80vh] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20 flex flex-col">
+    <DialogHeader>
+      <DialogTitle className="text-white flex items-center gap-2">
+        <Search className="h-5 w-5" />
+        Search Content
+      </DialogTitle>
+    </DialogHeader>
 
+    <div className="flex flex-col flex-1 overflow-hidden space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Search movies, TV shows, anime, manga, books..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500"
+          autoFocus
+        />
+      </div>
 
-        <div className="space-y-4 p-0 h-auto">
-          <div className="relative">
-            <Search className="absolute left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search movies, TV shows, anime, manga, books..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500"
-              autoFocus
-            />
-          </div>
-
-          {searchTerm.trim() && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-           <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md">
-  <TabsTrigger value="movies" className="flex items-center justify-center gap-1 p-1 sm:p-2">
-    <div className="flex items-center gap-1 sm:gap-1.5">
-      <Film className="h-4 w-4 sm:h-3 sm:w-3" />
-      <span className="hidden sm:inline text-xs">Movies</span>
-      <span className="hidden sm:inline text-xs">({getResultCount("movies")})</span>
-    </div>
-  </TabsTrigger>
-  
-  <TabsTrigger value="tv" className="flex items-center justify-center gap-1 p-1 sm:p-2">
-    <div className="flex items-center gap-1 sm:gap-1.5">
-      <Tv className="h-4 w-4 sm:h-3 sm:w-3" />
-      <span className="hidden sm:inline text-xs">TV</span>
-      <span className="hidden sm:inline text-xs">({getResultCount("tv")})</span>
-    </div>
-  </TabsTrigger>
-  
-  <TabsTrigger value="anime" className="flex items-center justify-center gap-1 p-1 sm:p-2">
-    <div className="flex items-center gap-1 sm:gap-1.5">
-      <Play className="h-4 w-4 sm:h-3 sm:w-3" />
-      <span className="hidden sm:inline text-xs">Anime</span>
-      <span className="hidden sm:inline text-xs">({getResultCount("anime")})</span>
-    </div>
-  </TabsTrigger>
-  
-  <TabsTrigger value="manga" className="flex items-center justify-center gap-1 p-1 sm:p-2">
-    <div className="flex items-center gap-1 sm:gap-1.5">
-      <BookOpen className="h-4 w-4 sm:h-3 sm:w-3" />
-      <span className="hidden sm:inline text-xs">Manga</span>
-      <span className="hidden sm:inline text-xs">({getResultCount("manga")})</span>
-    </div>
-  </TabsTrigger>
-  
-  <TabsTrigger value="books" className="flex items-center justify-center gap-1 p-1 sm:p-2">
-    <div className="flex items-center gap-1 sm:gap-1.5">
-      <Book className="h-4 w-4 sm:h-3 sm:w-3" />
-      <span className="hidden sm:inline text-xs">Books</span>
-      <span className="hidden sm:inline text-xs">({getResultCount("books")})</span>
-    </div>
-  </TabsTrigger>
-</TabsList>
-
-              <div className="mt-4 max-h-96 overflow-y-auto">
-                <TabsContent value="movies" className="mt-0">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-400">Searching movies...</div>
-                  ) : results.movies.length > 0 ? (
-                    <div className="space-y-4">
-                      {renderMovieResults(results.movies)}
-                      <div className="text-center">
-                        <Link href={`/movies?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
-                          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-                            View All Movie Results
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">No movies found</div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="tv" className="mt-0">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-400">Searching TV shows...</div>
-                  ) : results.tv.length > 0 ? (
-                    <div className="space-y-4">
-                      {renderTVResults(results.tv)}
-                      <div className="text-center">
-                        <Link href={`/series?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
-                          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-                            View All TV Results
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">No TV shows found</div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="anime" className="mt-0">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-400">Searching anime...</div>
-                  ) : results.anime.length > 0 ? (
-                    <div className="space-y-4">
-                      {renderAnimeResults(results.anime)}
-                      <div className="text-center">
-                        <Link href={`/anime?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
-                          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-                            View All Anime Results
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">No anime found</div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="manga" className="mt-0">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-400">Searching manga...</div>
-                  ) : results.manga.length > 0 ? (
-                    <div className="space-y-4">
-                      {renderMangaResults(results.manga)}
-                      <div className="text-center">
-                        <Link href={`/manga?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
-                          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-                            View All Manga Results
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">No manga found</div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="books" className="mt-0">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-400">Searching books...</div>
-                  ) : results.books.length > 0 ? (
-                    <div className="space-y-4">
-                      {renderBookResults(results.books)}
-                      <div className="text-center">
-                        <Link href={`/books?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
-                          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-                            View All Book Results
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">No books found</div>
-                  )}
-                </TabsContent>
+      {searchTerm.trim() ? (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md">
+            <TabsTrigger value="movies" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Film className="h-4 w-4 sm:h-3 sm:w-3" />
+                <span className="hidden sm:inline text-xs">Movies</span>
+                <span className="hidden sm:inline text-xs">({getResultCount("movies")})</span>
               </div>
-            </Tabs>
-          )}
+            </TabsTrigger>
+            
+            <TabsTrigger value="tv" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Tv className="h-4 w-4 sm:h-3 sm:w-3" />
+                <span className="hidden sm:inline text-xs">TV</span>
+                <span className="hidden sm:inline text-xs">({getResultCount("tv")})</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger value="anime" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Play className="h-4 w-4 sm:h-3 sm:w-3" />
+                <span className="hidden sm:inline text-xs">Anime</span>
+                <span className="hidden sm:inline text-xs">({getResultCount("anime")})</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger value="manga" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <BookOpen className="h-4 w-4 sm:h-3 sm:w-3" />
+                <span className="hidden sm:inline text-xs">Manga</span>
+                <span className="hidden sm:inline text-xs">({getResultCount("manga")})</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger value="books" className="flex items-center justify-center gap-1 p-1 sm:p-2">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Book className="h-4 w-4 sm:h-3 sm:w-3" />
+                <span className="hidden sm:inline text-xs">Books</span>
+                <span className="hidden sm:inline text-xs">({getResultCount("books")})</span>
+              </div>
+            </TabsTrigger>
+          </TabsList>
 
-          {!searchTerm.trim() && (
-            <div className="text-center py-12 text-gray-400">
-              Start typing to search across movies, TV shows, anime, manga, and books
-            </div>
-          )}
+          <div className="flex-1 overflow-y-auto mt-4">
+            <TabsContent value="movies" className="h-full">
+              {loading ? (
+                <div className="text-center py-8 text-gray-400">Searching movies...</div>
+              ) : results.movies.length > 0 ? (
+                <div className="space-y-4 pb-4">
+                  {renderMovieResults(results.movies)}
+                  <div className="text-center">
+                    <Link href={`/movies?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
+                        View All Movie Results
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">No movies found</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="tv" className="h-full">
+              {loading ? (
+                <div className="text-center py-8 text-gray-400">Searching TV shows...</div>
+              ) : results.tv.length > 0 ? (
+                <div className="space-y-4 pb-4">
+                  {renderTVResults(results.tv)}
+                  <div className="text-center">
+                    <Link href={`/series?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
+                        View All TV Results
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">No TV shows found</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="anime" className="h-full">
+              {loading ? (
+                <div className="text-center py-8 text-gray-400">Searching anime...</div>
+              ) : results.anime.length > 0 ? (
+                <div className="space-y-4 pb-4">
+                  {renderAnimeResults(results.anime)}
+                  <div className="text-center">
+                    <Link href={`/anime?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
+                        View All Anime Results
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">No anime found</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="manga" className="h-full">
+              {loading ? (
+                <div className="text-center py-8 text-gray-400">Searching manga...</div>
+              ) : results.manga.length > 0 ? (
+                <div className="space-y-4 pb-4">
+                  {renderMangaResults(results.manga)}
+                  <div className="text-center">
+                    <Link href={`/manga?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
+                        View All Manga Results
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">No manga found</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="books" className="h-full">
+              {loading ? (
+                <div className="text-center py-8 text-gray-400">Searching books...</div>
+              ) : results.books.length > 0 ? (
+                <div className="space-y-4 pb-4">
+                  {renderBookResults(results.books)}
+                  <div className="text-center">
+                    <Link href={`/books?search=${encodeURIComponent(searchTerm)}`} onClick={handleClose}>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
+                        View All Book Results
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">No books found</div>
+              )}
+            </TabsContent>
+          </div>
+        </Tabs>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-gray-400">
+          Start typing to search across movies, TV shows, anime, manga, and books
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
+  </DialogContent>
+</Dialog>
   )
 }
