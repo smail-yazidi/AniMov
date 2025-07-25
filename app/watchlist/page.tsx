@@ -623,7 +623,7 @@ export default function WatchlistPage() {
               <ListPlus className="h-16 w-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">Your watchlist is empty</h3>
               <p className="text-gray-400">Start adding movies, TV series, or anime to your watchlist</p>
-          
+        <br/>    
   <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
     {categories.map((category) => (
       <Link 

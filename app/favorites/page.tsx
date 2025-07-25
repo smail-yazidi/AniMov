@@ -465,7 +465,7 @@ const categories = [
   <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">
     Start adding your favorite content to see them here
   </p>
-  
+  <br/>
   <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
     {categories.map((category) => (
       <Link 
