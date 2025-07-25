@@ -16,7 +16,7 @@ import {
   CheckCircle, // For 'completed'
   PauseCircle, // For 'on-hold'
   XCircle, // For 'dropped'
-  Clock,Search, // For 'plan-to-watch'
+  Clock,Search, Film,Tv,Play// For 'plan-to-watch'
 } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { toast } from "@/components/ui/use-toast";
@@ -62,6 +62,14 @@ export default function WatchlistPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
+
+  const categories = [
+  { id: "movies", name: "Movies", icon: Film, color: "bg-red-500", urlType: "movie" },
+  { id: "series", name: "TV Series", icon: Tv, color: "bg-blue-500", urlType: "tv" },
+  { id: "anime", name: "Anime", icon: Play, color: "bg-purple-500", urlType: "anime" },
+
+
+]
   useEffect(() => {
     async function fetchWatchlistAndDetails() {
       try {
@@ -615,8 +623,25 @@ export default function WatchlistPage() {
               <ListPlus className="h-16 w-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">Your watchlist is empty</h3>
               <p className="text-gray-400">Start adding movies, TV series, or anime to your watchlist</p>
-              {/* Example of how you might use handleAddToWatchlist from here for testing */}
-              {/* <Button onClick={() => handleAddToWatchlist("100", "movie")}>Add Sample Movie</Button> */}
+          
+  <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
+    {categories.map((category) => (
+      <Link 
+        key={category.name}
+        href={`/${category.urlType}`}
+        passHref
+      >
+        <button
+          className={`flex flex-col items-center p-2 sm:p-3 md:p-4 rounded-lg ${category.color} bg-opacity-80 hover:bg-opacity-100 transition-all cursor-pointer w-16 sm:w-20 md:w-24`}
+        >
+          <category.icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white mb-1 sm:mb-2" />
+          <span className="text-white text-xs sm:text-sm font-medium whitespace-nowrap">
+            {category.name}
+          </span>
+        </button>
+      </Link>
+    ))}
+  </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

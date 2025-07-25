@@ -469,7 +469,7 @@ const categories = [
   <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
     {categories.map((category) => (
       <Link 
-        key={category.id}
+        key={category.name}
         href={`/${category.urlType}`}
         passHref
       >

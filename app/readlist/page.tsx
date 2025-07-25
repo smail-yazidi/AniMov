@@ -84,6 +84,11 @@ export default function ReadlistPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
+  const categories = [
+ 
+  { id: "manga", name: "Manga", icon: BookOpen, color: "bg-orange-500", urlType: "manga" },
+  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "book" },
+]
   useEffect(() => {
     async function fetchReadlistAndDetails() {
       try {
@@ -635,15 +640,25 @@ export default function ReadlistPage() {
               <BookOpen className="h-16 w-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">Your readlist is empty</h3>
               <p className="text-gray-400">Start adding books or manga to your readlist</p>
-              {/* Example of how you might use handleAddToReadlist for testing */}
-              {/* These buttons are commented out because they require actual data,
-                  but show how you would call the function if you had mock content IDs. */}
-              {/*
-              <div className="flex justify-center gap-4 mt-4">
-                <Button onClick={() => handleAddToReadlist("1", "manga", "One Piece", "https://api.myanimelist.net/images/manga/1/1.jpg")}>Add Sample Manga</Button>
-                <Button onClick={() => handleAddToReadlist("zyTCAlFPjgWC", "book", "The Lord of the Rings", "http://books.google.com/books/content?id=zyTCAlFPjgWC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api")}>Add Sample Book</Button>
-              </div>
-              */}
+            
+  <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
+    {categories.map((category) => (
+      <Link 
+        key={category.name}
+        href={`/${category.urlType}`}
+        passHref
+      >
+        <button
+          className={`flex flex-col items-center p-2 sm:p-3 md:p-4 rounded-lg ${category.color} bg-opacity-80 hover:bg-opacity-100 transition-all cursor-pointer w-16 sm:w-20 md:w-24`}
+        >
+          <category.icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white mb-1 sm:mb-2" />
+          <span className="text-white text-xs sm:text-sm font-medium whitespace-nowrap">
+            {category.name}
+          </span>
+        </button>
+      </Link>
+    ))}
+  </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
