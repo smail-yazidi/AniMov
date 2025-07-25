@@ -47,18 +47,36 @@ export default function NotLoggedInComponent() {
     currentIndexSetter,
     totalItemsLength,
     timeoutRef,
-    typePrefix // Added for console logging clarity (e.g., "Category", "List")
+    typePrefix
   ) => {
-    let charIndex = 0;
-    setter(""); // Clear the text at the beginning of a new word
+    // Clear any previous timeout if starting a new typing sequence
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Handle empty string case immediately
+    if (textToType.length === 0) {
+      setter("");
+      // Optionally schedule next item immediately if word is empty
+      timeoutRef.current = setTimeout(() => {
+        currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
+      }, 1500);
+      return; // Exit if nothing to type
+    }
+
+    // Set the first character immediately
+    setter(textToType[0]);
+    let charIndex = 1; // Start from the second character for subsequent appends
 
     console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
+    console.log(`[${typePrefix} Typing] Initial: "${textToType[0]}"`);
+
 
     const typeNextChar = () => {
       console.log(`[${typePrefix} Timer] charIndex: ${charIndex}, textToType.length: ${textToType.length}`);
 
       if (charIndex < textToType.length) {
-        // Only append if there's a character to append
+        // Append the next character
         setter((prev) => {
           const newText = prev + textToType[charIndex];
           console.log(`[${typePrefix} Typing] Appending "${textToType[charIndex]}", current typed: "${newText}"`);
@@ -76,8 +94,8 @@ export default function NotLoggedInComponent() {
       }
     };
 
-    // Start typing immediately
-    typeNextChar();
+    // Schedule the typing for the rest of the characters
+    timeoutRef.current = setTimeout(typeNextChar, 100);
   };
 
   // Effect for typing categories
@@ -85,18 +103,13 @@ export default function NotLoggedInComponent() {
     const currentCategoryName = categories[categoryIndex].name;
     console.log(`[Category Effect] useEffect triggered for categoryIndex: ${categoryIndex}, word: "${currentCategoryName}"`);
 
-    if (categoryTimeoutRef.current) {
-      console.log("[Category Effect] Clearing previous category timeout.");
-      clearTimeout(categoryTimeoutRef.current);
-    }
-
     typeText(
       currentCategoryName,
       setTypedCategory,
       setCategoryIndex,
       categories.length,
       categoryTimeoutRef,
-      "Category" // Pass prefix for logging
+      "Category"
     );
 
     return () => {
@@ -112,18 +125,13 @@ export default function NotLoggedInComponent() {
     const currentListName = listTypes[listTypeIndex].name;
     console.log(`[List Effect] useEffect triggered for listTypeIndex: ${listTypeIndex}, word: "${currentListName}"`);
 
-    if (listTimeoutRef.current) {
-      console.log("[List Effect] Clearing previous list timeout.");
-      clearTimeout(listTimeoutRef.current);
-    }
-
     typeText(
       currentListName,
       setTypedList,
       setListTypeIndex,
       listTypes.length,
       listTimeoutRef,
-      "List" // Pass prefix for logging
+      "List"
     );
 
     return () => {
