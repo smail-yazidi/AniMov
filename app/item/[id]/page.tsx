@@ -348,56 +348,79 @@ const isWatchingContentType = (contentType) => {
 
   const TypeIcon = getTypeIcon(type)
 const handleAddToReadingList = async () => {
-  // Get the correct ID based on the item type
   const contentId = getContentId(item, type);
-  console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Content ID:", contentId); // Log the correct ID
-  console.log("Type:", type);
-  // Updated check: now uses `contentId` instead of `item.id`
+
   if (!item || !contentId || !type) {
-    console.log("Missing item, content ID, or type. Aborting.");
+    console.log("Missing item, content ID, or type for reading list. Aborting.");
     return;
   }
 
-  console.log("Info exists. Details:");
+  console.log("Attempting to toggle Reading List status...");
   console.log("Item:", item);
-  console.log("Content ID:", contentId); // Log the correct ID
+  console.log("Content ID:", contentId);
   console.log("Type:", type);
+  console.log("Current isInReadingList:", isInReadingList);
 
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
-      throw new Error("No session found. Please log in to add to your reading list.");
+      throw new Error("No session found. Please log in to manage your reading list.");
     }
 
-    const res = await fetch("/api/readlist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionId}`,
-      },
-      body: JSON.stringify({
-        contentId: contentId, // Use the correct, universal contentId here
-        contentType: type,
-      }),
-    });
+    let res;
+    let method;
+    let successMessage;
+    let errorMessage;
+
+    if (isInReadingList) {
+      // If already in reading list, remove it (DELETE)
+      method = "DELETE";
+      successMessage = "Removed from reading list!";
+      errorMessage = "Failed to remove from reading list.";
+      res = await fetch("/api/readlist", {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          contentId: contentId,
+          contentType: type,
+        }),
+      });
+    } else {
+      // If not in reading list, add it (POST)
+      method = "POST";
+      successMessage = "Added to reading list!";
+      errorMessage = "Failed to add to reading list.";
+      res = await fetch("/api/readlist", {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionId}`,
+        },
+        body: JSON.stringify({
+          contentId: contentId,
+          contentType: type,
+        }),
+      });
+    }
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("Server error response on add to reading list:", errorData);
-      throw new Error(errorData.error || "Failed to add to reading list.");
+      console.error(`Server error response on ${method} reading list:`, errorData);
+      throw new Error(errorData.error || errorMessage);
     }
 
-    const newReadingListItem = await res.json();
-    toast({ title: "Added to reading list!" });
-    // IMPORTANT: You set setIsInWatchlist(true) here. It should be setIsInReadingList(true)
-    setIsInReadingList(true); // Corrected state update for reading list
+    // Update local state based on the action
+    setIsInReadingList(!isInReadingList);
+    toast({ title: successMessage });
+
   } catch (error) {
-    console.error("Error adding to reading list:", error);
+    console.error("Error toggling reading list:", error);
     toast({
       title: "Error",
-      description: error instanceof Error ? error.message : "Failed to add to reading list.",
+      description: error instanceof Error ? error.message : "Failed to toggle reading list",
       variant: "destructive",
     });
   }
@@ -482,7 +505,7 @@ const handleAddToWatchlist = async () => {
       let method;
       let successMessage;
       let errorMessage;
-console.log("isInFavorites :"+isInFavorites)
+
       if (isInFavorites) {
         // If already in favorites, remove it (DELETE)
         method = "DELETE";
