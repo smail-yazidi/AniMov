@@ -24,6 +24,7 @@ export default function SignInPage() {
   const searchParams = useSearchParams()
 const callbackUrl = searchParams.get("callbackUrl") || "/"
 
+console.log("Callback URL:", callbackUrl); // Add this line
 const handleSignIn = async (e: React.FormEvent) => {
   e.preventDefault()
   setIsLoading(true)
