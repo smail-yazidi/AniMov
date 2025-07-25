@@ -35,66 +35,72 @@ export default function NotLoggedInComponent() {
   const [typedCategory, setTypedCategory] = useState("");
   const [typedList, setTypedList] = useState("");
 
+  // Effect for typing categories
   useEffect(() => {
-    const current = categories[categoryIndex].name;
-    let charIndex = 0; // Start at 0
+    const currentWord = categories[categoryIndex].name;
+    let charIndex = 0; // Local mutable variable for typing progress
 
-    // Set the first character immediately to avoid "undefined" or missing first char
-    if (current.length > 0) {
-      setTypedCategory(current[charIndex]);
-      charIndex++; // Increment for the next character to be typed
+    // Immediately set the first character (or empty if word is empty)
+    // This prevents the "missing first character" issue.
+    if (currentWord.length > 0) {
+      setTypedCategory(currentWord[0]);
+      charIndex = 1; // Start the interval from the second character
     } else {
-      setTypedCategory(""); // Handle empty string case
+      setTypedCategory("");
     }
 
-
-    const interval = setInterval(() => {
-      if (charIndex < current.length) {
-        setTypedCategory((prev) => prev + current[charIndex]);
+    const intervalId = setInterval(() => {
+      if (charIndex < currentWord.length) {
+        // If there are more characters, append the next one
+        setTypedCategory((prev) => prev + currentWord[charIndex]);
         charIndex++;
       } else {
-        clearInterval(interval);
+        // If all characters are typed, clear the interval
+        clearInterval(intervalId);
+        // And then move to the next category after a delay
         setTimeout(() => {
           setCategoryIndex((prev) => (prev + 1) % categories.length);
         }, 1500);
       }
-    }, 100);
+    }, 100); // Typing speed
 
-    return () => clearInterval(interval);
-  }, [categoryIndex]);
+    // Cleanup function to clear interval if component unmounts or dependency changes
+    return () => clearInterval(intervalId);
+  }, [categoryIndex]); // Rerun effect when categoryIndex changes
 
+  // Effect for typing list types (identical logic to categories)
   useEffect(() => {
-    const current = listTypes[listTypeIndex].name;
-    let charIndex = 0; // Start at 0
+    const currentWord = listTypes[listTypeIndex].name;
+    let charIndex = 0; // Local mutable variable for typing progress
 
-    // Set the first character immediately
-    if (current.length > 0) {
-      setTypedList(current[charIndex]);
-      charIndex++; // Increment for the next character to be typed
+    // Immediately set the first character
+    if (currentWord.length > 0) {
+      setTypedList(currentWord[0]);
+      charIndex = 1; // Start the interval from the second character
     } else {
-      setTypedList(""); // Handle empty string case
+      setTypedList("");
     }
 
-
-    const interval = setInterval(() => {
-      if (charIndex < current.length) {
-        setTypedList((prev) => prev + current[charIndex]);
+    const intervalId = setInterval(() => {
+      if (charIndex < currentWord.length) {
+        setTypedList((prev) => prev + currentWord[charIndex]);
         charIndex++;
       } else {
-        clearInterval(interval);
+        clearInterval(intervalId);
         setTimeout(() => {
           setListTypeIndex((prev) => (prev + 1) % listTypes.length);
         }, 1500);
       }
     }, 100);
 
-    return () => clearInterval(interval);
-  }, [listTypeIndex]);
+    return () => clearInterval(intervalId);
+  }, [listTypeIndex]); // Rerun effect when listTypeIndex changes
 
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
 
   // Destructure the icon components for easier use in JSX
+  // This was already a good fix from previous iterations.
   const CategoryIcon = CurrentCategory.icon;
   const ListIcon = CurrentList.icon;
 
