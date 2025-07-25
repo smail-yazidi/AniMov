@@ -373,21 +373,36 @@ const handleAddToReadingList = async () => {
     let errorMessage;
 
     if (isInReadingList) {
-      // If already in reading list, remove it (DELETE)
-      method = "DELETE";
-      successMessage = "Removed from reading list!";
-      errorMessage = "Failed to remove from reading list.";
-      res = await fetch("/api/readlist", {
-        method: method,
+ try {
+      const sessionId = localStorage.getItem("sessionId");
+  
+
+      const response = await fetch("/api/readlist", {
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sessionId}`,
         },
         body: JSON.stringify({
-          contentId: contentId,
-          contentType: type,
+          _id: contentId,
+                    contentType: type,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Server error response on remove readlist item:", errorData);
+        throw new Error(errorData.error || "Failed to remove item from readlist");
+      }
+
+    } catch (err: any) {
+      console.error("Error removing readlist item:", err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to remove item from readlist.",
+        variant: "destructive",
+      });
+    }
     } else {
       // If not in reading list, add it (POST)
       method = "POST";
