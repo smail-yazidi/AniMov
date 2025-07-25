@@ -72,8 +72,8 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true)
   const [userRating, setUserRating] = useState(0)
   const [userComment, setUserComment] = useState("")
-  const [isInWatchlist, setIsInWatchlist] = useState(false)
-  const [isInFavorites, setIsInFavorites] = useState(false)
+  const [isInWatchlist, setIsInWatchlist] = useState<boolean>(false)
+  const [isInFavorites, setIsInFavorites] = useState<boolean>(false)
 const [isInReadingList, setIsInReadingList] = useState<boolean>(false); // Initialize as false
   const router = useRouter();
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
@@ -498,7 +498,7 @@ const handleAddToWatchlist = async () => {
           contentType: type,
         }),
       });
-      successMessage = "Removed from watchlist!";
+     console.log(  "Removed from watchlist!")
     } else {
       // If not in watchlist, add it (POST)
       response = await fetch("/api/watchlist", {
@@ -512,7 +512,7 @@ const handleAddToWatchlist = async () => {
           contentType: type,
         }),
       });
-      successMessage = "Added to watchlist!";
+console.log("Added to watchlist!")
     }
 
     if (!response.ok) {

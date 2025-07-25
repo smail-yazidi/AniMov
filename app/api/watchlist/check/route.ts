@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const contentId = searchParams.get("contentId");
   const contentType = searchParams.get("contentType"); // "movie" | "tv" | "anime"
-
+console.log("// /api/watchlist/check/route.ts"+contentType)
   if (!contentId || !contentType) {
     return NextResponse.json(
       { error: "Missing contentId or contentType" },
