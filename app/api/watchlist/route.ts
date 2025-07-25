@@ -174,7 +174,6 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
-
 // DELETE handler: Remove an item from the watchlist
 export async function DELETE(req: Request) {
     console.log("DELETE /api/watchlist called.");
@@ -187,22 +186,29 @@ export async function DELETE(req: Request) {
         }
 
         const body = await req.json();
-        const { _id } = body; // Expecting the MongoDB _id of the watchlist item
+        const { _id, contentId, contentType } = body;
 
-        if (!_id) {
-            return NextResponse.json({ error: "Missing watchlist item ID for deletion" }, { status: 400 });
+        let query: any = { userId: new mongoose.Types.ObjectId(userId) };
+
+        if (_id && mongoose.Types.ObjectId.isValid(_id)) {
+            query._id = new mongoose.Types.ObjectId(_id);
+        } else if (contentId && contentType) {
+            query.contentId = contentId;
+            query.contentType = contentType;
+        } else {
+            return NextResponse.json(
+                { error: "Invalid or missing parameters for deletion. Need either _id or both contentId and contentType" },
+                { status: 400 }
+            );
         }
 
-        const deleted = await WatchlistItemModel.findOneAndDelete({
-            _id: new mongoose.Types.ObjectId(_id),
-            userId: new mongoose.Types.ObjectId(userId), // Security check: ensure item belongs to user
-        });
+        const deleted = await WatchlistItemModel.findOneAndDelete(query);
 
         if (!deleted) {
             return NextResponse.json({ error: "Watchlist item not found or unauthorized to delete" }, { status: 404 });
         }
 
-        console.log(`Watchlist item ${_id} successfully removed.`);
+        console.log("Watchlist item successfully removed.");
         return NextResponse.json({ message: "Watchlist item removed successfully" }, { status: 200 });
     } catch (error) {
         console.error("Error removing watchlist item:", error);
