@@ -178,6 +178,7 @@ useEffect(() => {
   checkIfInFavorites();
   checkIfInWatchlist();
   checkIfInReadingList();
+  console.log(type)
 
 }, [item, type]); // Dependencies remain item and type/ Dependencies remain item and type
 const getContentId = (contentItem, contentType) => {
