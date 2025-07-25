@@ -532,45 +532,83 @@ export default function WatchlistPage() {
                 {filteredWatchlist.length} items
               </Badge>
             </div>
+{/* Filter Controls */}
+<div className="flex flex-wrap items-center gap-4">
 
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap items-center gap-4">
-              <Filter className="h-5 w-5 text-gray-400" />
-              <div className="flex gap-2 flex-wrap">
-                {["all", "movie", "tv", "anime"].map((type) => (
-                  <Button
-                    key={type}
-                    variant={selectedType === type ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedType(type)}
-                    className={
-                      selectedType === type
-                        ? "bg-indigo-600 hover:bg-indigo-700"
-                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    }
-                  >
-                    {type === "all" ? "All Types" : getTypeLabel(type)}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex gap-2 flex-wrap ml-auto md:ml-0">
-                {["all", "plan-to-watch", "watching", "completed", "on-hold", "dropped"].map((status) => (
-                  <Button
-                    key={status}
-                    variant={selectedStatus === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedStatus(status as DisplayWatchlistItem["status"] | "all")}
-                    className={
-                      selectedStatus === status
-                        ? "bg-indigo-600 hover:bg-indigo-700"
-                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    }
-                  >
-                    {status === "all" ? "All Statuses" : getStatusLabel(status as DisplayWatchlistItem["status"])}
-                  </Button>
-                ))}
-              </div>
-            </div>
+  <Filter className="h-5 w-5 text-gray-400" />
+
+  {/* Mobile Dropdowns */}
+  <div className="block md:hidden flex flex-col gap-2 w-full">
+
+    {/* Type Dropdown */}
+    <select
+      value={selectedType}
+      onChange={(e) => setSelectedType(e.target.value)}
+      className="bg-white/10 border border-white/20 text-white p-2 rounded"
+    >
+      {["all", "movie", "tv", "anime"].map((type) => (
+        <option key={type} value={type}>
+          {type === "all" ? "All Types" : getTypeLabel(type)}
+        </option>
+      ))}
+    </select>
+
+    {/* Status Dropdown */}
+    <select
+      value={selectedStatus}
+      onChange={(e) =>
+        setSelectedStatus(e.target.value as DisplayWatchlistItem["status"] | "all")
+      }
+      className="bg-white/10 border border-white/20 text-white p-2 rounded"
+    >
+      {["all", "plan-to-watch", "watching", "completed", "on-hold", "dropped"].map((status) => (
+        <option key={status} value={status}>
+          {status === "all" ? "All Statuses" : getStatusLabel(status as DisplayWatchlistItem["status"])}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Desktop Buttons */}
+  <div className="hidden md:flex gap-2 flex-wrap">
+    {["all", "movie", "tv", "anime"].map((type) => (
+      <Button
+        key={type}
+        variant={selectedType === type ? "default" : "outline"}
+        size="sm"
+        onClick={() => setSelectedType(type)}
+        className={
+          selectedType === type
+            ? "bg-indigo-600 hover:bg-indigo-700"
+            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+        }
+      >
+        {type === "all" ? "All Types" : getTypeLabel(type)}
+      </Button>
+    ))}
+  </div>
+
+  <div className="hidden md:flex gap-2 flex-wrap ml-auto">
+    {["all", "plan-to-watch", "watching", "completed", "on-hold", "dropped"].map((status) => (
+      <Button
+        key={status}
+        variant={selectedStatus === status ? "default" : "outline"}
+        size="sm"
+        onClick={() =>
+          setSelectedStatus(status as DisplayWatchlistItem["status"] | "all")
+        }
+        className={
+          selectedStatus === status
+            ? "bg-indigo-600 hover:bg-indigo-700"
+            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+        }
+      >
+        {status === "all" ? "All Statuses" : getStatusLabel(status as DisplayWatchlistItem["status"])}
+      </Button>
+    ))}
+  </div>
+</div>
+
           </div>
         </header>
 
