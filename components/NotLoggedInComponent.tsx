@@ -41,59 +41,62 @@ export default function NotLoggedInComponent() {
   const listTimeoutRef = useRef(null);
 
   // Helper function for typing effect (reusable)
-  const typeText = (
-    textToType,
-    setter,
-    currentIndexSetter,
-    totalItemsLength,
-    timeoutRef,
-    typePrefix
-  ) => {
-    // Clear any previous timeout if starting a new typing sequence
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+const typeText = (
+  textToType,
+  setter,
+  currentIndexSetter,
+  totalItemsLength,
+  timeoutRef,
+  typePrefix
+) => {
+  // Clear any previous timeout if starting a new typing sequence
+  if (timeoutRef.current) {
+    clearTimeout(timeoutRef.current);
+  }
 
-    setter(""); // Always clear the text at the beginning of a new word/sequence
+  setter(""); // Always clear the text at the beginning of a new word/sequence
 
-    if (textToType.length === 0) {
-      console.log(`[${typePrefix} Effect] Empty word, skipping typing.`);
-      // Optionally schedule next item immediately if word is empty
+  if (!textToType || textToType.length === 0) {
+    console.log(`[${typePrefix} Effect] Empty word, skipping typing.`);
+    // Schedule next item immediately if word is empty
+    timeoutRef.current = setTimeout(() => {
+      currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
+    }, 1500);
+    return;
+  }
+
+  let charIndex = 0;
+
+  console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
+
+  const typeNextChar = () => {
+    if (charIndex < textToType.length) {
+      // Append the next character
+      setter((prev) => {
+        const nextChar = textToType.charAt(charIndex);
+        if (!nextChar) {
+          console.error(`[${typePrefix} Error] Undefined character at index ${charIndex} for "${textToType}"`);
+          return prev; // Skip undefined characters
+        }
+        const newText = prev + nextChar;
+        console.log(`[${typePrefix} Typing] Appending "${nextChar}", current typed: "${newText}"`);
+        return newText;
+      });
+      charIndex++;
+      timeoutRef.current = setTimeout(typeNextChar, 100);
+    } else {
+      // Word is fully typed
+      console.log(`[${typePrefix} Finished] Word "${textToType}" fully typed.`);
       timeoutRef.current = setTimeout(() => {
+        console.log(`[${typePrefix} Next Item] Moving to next item.`);
         currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
       }, 1500);
-      return; // Exit if nothing to type
     }
-
-    let charIndex = 0; // Start charIndex at 0
-
-    console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
-
-    const typeNextChar = () => {
-      console.log(`[${typePrefix} Timer] charIndex: ${charIndex}, textToType.length: ${textToType.length}`);
-
-      if (charIndex < textToType.length) {
-        // Append the next character
-        setter((prev) => {
-          const newText = prev + textToType[charIndex];
-          console.log(`[${typePrefix} Typing] Appending "${textToType[charIndex]}", current typed: "${newText}"`);
-          return newText;
-        });
-        charIndex++; // Increment charIndex AFTER using it
-        timeoutRef.current = setTimeout(typeNextChar, 100); // Schedule next char
-      } else {
-        // Word is fully typed
-        console.log(`[${typePrefix} Finished] Word "${textToType}" fully typed.`);
-        timeoutRef.current = setTimeout(() => {
-          console.log(`[${typePrefix} Next Item] Moving to next item.`);
-          currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
-        }, 1500); // Delay before moving to next item
-      }
-    };
-
-    // Initial call to start typing (no delay for the first char)
-    typeNextChar();
   };
+
+  // Start typing
+  typeNextChar();
+};
 
   // Effect for typing categories
   useEffect(() => {
