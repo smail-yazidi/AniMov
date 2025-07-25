@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Import useRef
 import {
   Book,
   BookOpen,
@@ -35,72 +37,92 @@ export default function NotLoggedInComponent() {
   const [typedCategory, setTypedCategory] = useState("");
   const [typedList, setTypedList] = useState("");
 
+  // Use refs to store timeout IDs so we can clear them reliably
+  const categoryTimeoutRef = useRef(null);
+  const listTimeoutRef = useRef(null);
+
+  // Helper function for typing effect (reusable)
+  const typeText = (
+    textToType,
+    setter,
+    currentIndexSetter,
+    totalItemsLength,
+    timeoutRef
+  ) => {
+    let charIndex = 0;
+    setter(""); // Clear the text at the beginning of a new word
+
+    const typeNextChar = () => {
+      if (charIndex < textToType.length) {
+        setter((prev) => prev + textToType[charIndex]);
+        charIndex++;
+        timeoutRef.current = setTimeout(typeNextChar, 100); // Schedule next char
+      } else {
+        // Word is fully typed, wait, then move to next item
+        timeoutRef.current = setTimeout(() => {
+          currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
+        }, 1500);
+      }
+    };
+
+    typeNextChar(); // Start typing immediately
+  };
+
   // Effect for typing categories
   useEffect(() => {
-    const currentWord = categories[categoryIndex].name;
-    let charIndex = 0; // Local mutable variable for typing progress
+    const currentCategoryName = categories[categoryIndex].name;
 
-    // Immediately set the first character (or empty if word is empty)
-    // This prevents the "missing first character" issue.
-    if (currentWord.length > 0) {
-      setTypedCategory(currentWord[0]);
-      charIndex = 1; // Start the interval from the second character
-    } else {
-      setTypedCategory("");
+    // Clear any existing timeout from a previous cycle before starting a new one
+    if (categoryTimeoutRef.current) {
+      clearTimeout(categoryTimeoutRef.current);
     }
 
-    const intervalId = setInterval(() => {
-      if (charIndex < currentWord.length) {
-        // If there are more characters, append the next one
-        setTypedCategory((prev) => prev + currentWord[charIndex]);
-        charIndex++;
-      } else {
-        // If all characters are typed, clear the interval
-        clearInterval(intervalId);
-        // And then move to the next category after a delay
-        setTimeout(() => {
-          setCategoryIndex((prev) => (prev + 1) % categories.length);
-        }, 1500);
+    typeText(
+      currentCategoryName,
+      setTypedCategory,
+      setCategoryIndex,
+      categories.length,
+      categoryTimeoutRef
+    );
+
+    // Cleanup function: ensures timeout is cleared when component unmounts
+    // or when categoryIndex changes (and effect re-runs)
+    return () => {
+      if (categoryTimeoutRef.current) {
+        clearTimeout(categoryTimeoutRef.current);
       }
-    }, 100); // Typing speed
+    };
+  }, [categoryIndex]); // Dependency array: re-run when categoryIndex changes
 
-    // Cleanup function to clear interval if component unmounts or dependency changes
-    return () => clearInterval(intervalId);
-  }, [categoryIndex]); // Rerun effect when categoryIndex changes
-
-  // Effect for typing list types (identical logic to categories)
+  // Effect for typing list types
   useEffect(() => {
-    const currentWord = listTypes[listTypeIndex].name;
-    let charIndex = 0; // Local mutable variable for typing progress
+    const currentListName = listTypes[listTypeIndex].name;
 
-    // Immediately set the first character
-    if (currentWord.length > 0) {
-      setTypedList(currentWord[0]);
-      charIndex = 1; // Start the interval from the second character
-    } else {
-      setTypedList("");
+    // Clear any existing timeout
+    if (listTimeoutRef.current) {
+      clearTimeout(listTimeoutRef.current);
     }
 
-    const intervalId = setInterval(() => {
-      if (charIndex < currentWord.length) {
-        setTypedList((prev) => prev + currentWord[charIndex]);
-        charIndex++;
-      } else {
-        clearInterval(intervalId);
-        setTimeout(() => {
-          setListTypeIndex((prev) => (prev + 1) % listTypes.length);
-        }, 1500);
-      }
-    }, 100);
+    typeText(
+      currentListName,
+      setTypedList,
+      setListTypeIndex,
+      listTypes.length,
+      listTimeoutRef
+    );
 
-    return () => clearInterval(intervalId);
-  }, [listTypeIndex]); // Rerun effect when listTypeIndex changes
+    // Cleanup function
+    return () => {
+      if (listTimeoutRef.current) {
+        clearTimeout(listTimeoutRef.current);
+      }
+    };
+  }, [listTypeIndex]); // Dependency array: re-run when listTypeIndex changes
 
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
 
   // Destructure the icon components for easier use in JSX
-  // This was already a good fix from previous iterations.
   const CategoryIcon = CurrentCategory.icon;
   const ListIcon = CurrentList.icon;
 
@@ -111,7 +133,8 @@ export default function NotLoggedInComponent() {
         All Your Favorites{" "}
         <span className={`inline-flex items-center gap-2 ${CurrentCategory.color}`}>
           <CategoryIcon className="w-6 h-6" />
-          <span className="min-w-[6ch]">{typedCategory}</span>
+          {/* Using min-w-min to ensure space for the word even if it's short */}
+          <span className="min-w-min">{typedCategory}</span>
         </span>
       </h1>
 
@@ -120,7 +143,7 @@ export default function NotLoggedInComponent() {
         Sign in or create an account to manage your personal{" "}
         <span className={`inline-flex items-center gap-1 ${CurrentList.color}`}>
           <ListIcon className="w-5 h-5" />
-          <span className="min-w-[6ch]">{typedList}</span>
+          <span className="min-w-min">{typedList}</span>
         </span>
       </p>
 
