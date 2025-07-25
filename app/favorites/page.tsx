@@ -459,11 +459,14 @@ const categories = [
         {/* Favorites Grid */}
         <div className="container mx-auto px-4 py-8">
           {filteredFavorites.length === 0 ? (
-            <div className="text-center py-12">
-              <Heart className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No favorites yet</h3>
-              <p className="text-gray-400">Start adding your favorite content to see them here</p>
-                <div className="flex flex-wrap justify-center gap-4 max-w-md mx-auto">
+         <div className="text-center py-8 md:py-12">
+  <Heart className="h-12 w-12 md:h-16 md:w-16 text-gray-500 mx-auto mb-3 md:mb-4" />
+  <h3 className="text-lg md:text-xl font-semibold text-white mb-1 md:mb-2">No favorites yet</h3>
+  <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">
+    Start adding your favorite content to see them here
+  </p>
+  
+  <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-md mx-auto">
     {categories.map((category) => (
       <Link 
         key={category.id}
@@ -471,15 +474,17 @@ const categories = [
         passHref
       >
         <button
-          className={`flex flex-col items-center p-4 rounded-lg ${category.color} bg-opacity-80 hover:bg-opacity-100 transition-all cursor-pointer w-24`}
+          className={`flex flex-col items-center p-2 sm:p-3 md:p-4 rounded-lg ${category.color} bg-opacity-80 hover:bg-opacity-100 transition-all cursor-pointer w-16 sm:w-20 md:w-24`}
         >
-          <category.icon className="h-6 w-6 text-white mb-2" />
-          <span className="text-white text-sm font-medium">{category.name}</span>
+          <category.icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white mb-1 sm:mb-2" />
+          <span className="text-white text-xs sm:text-sm font-medium whitespace-nowrap">
+            {category.name}
+          </span>
         </button>
       </Link>
     ))}
   </div>
-            </div>
+</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredFavorites.map((item) => (
