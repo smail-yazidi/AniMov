@@ -723,7 +723,7 @@ export default function WatchlistPage() {
                       </div>
                     </div>
                   </CardContent>
-                </Card></Link>
+                </Card>
               ))}
             </div>
           )}
