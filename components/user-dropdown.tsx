@@ -194,11 +194,15 @@ export function UserDropdown({ className }: UserDropdownProps) {
   if (!user) {
     // If not loading AND no user, show the Sign In button
     return (
-      <Link href="/auth/signin">
-        <Button variant="outline" className="ml-2">
-          Sign In
-        </Button>
-      </Link>
+  <Link href="/auth/signin">
+  <Button
+    style={{ backgroundColor: "hsl(328.1, 78.4%, 60%)", color: "white" }}
+    className="ml-2 hover:brightness-110"
+  >
+    Sign In
+  </Button>
+</Link>
+
     )
   }
 
