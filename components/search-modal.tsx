@@ -248,17 +248,17 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     </DialogHeader>
 
     <div className="flex flex-col flex-1 overflow-hidden space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-100" />
-     <Input
-  placeholder="Search movies, TV shows, anime, manga, books..."
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-className="pl-10 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-0"
- autoFocus
-/>
+     <div className="relative">
+  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4 z-50" />
+  <Input
+    placeholder="Search movies, TV shows, anime, manga, books..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="pl-10 bg-white/10 backdrop-blur-md border-white/20 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-0 z-0"
+    autoFocus
+  />
+</div>
 
-      </div>
 
       {searchTerm.trim() ? (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 overflow-hidden">
