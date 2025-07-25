@@ -240,7 +240,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
 <DialogContent
-  className="max-w-7xl max-h-[1200px] h-[800px] mt-[100px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
+  className="max-w-7xl max-h-[1200px] h-[600px] mt-[100px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
 >
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
