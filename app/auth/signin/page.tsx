@@ -1,8 +1,9 @@
 "use client"
+import { useRouter, useSearchParams } from "next/navigation"
+
 
 import type React from "react"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,47 +21,48 @@ export default function SignInPage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+const callbackUrl = searchParams.get("callbackUrl") || "/"
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+const handleSignIn = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsLoading(true)
+  setError("")
 
-    try {
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+  try {
+    const response = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-      const data = await response.json()
+    const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || "Sign in failed")
-      }
-
-      // احفظ الـ sessionId في localStorage
-      localStorage.setItem("sessionId", data.sessionId)
-
-     toast({
-  title: "Welcome back!",
-  description: "You have successfully signed in.",
-  className: "text-white", // for text visibility
-  style: {
-    backgroundColor: "hsl(328.1, 78.4%, 60%)"
-  }
-})
-
-
-      router.push("/")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
-    } finally {
-      setIsLoading(false)
+    if (!response.ok) {
+      throw new Error(data.error || "Sign in failed")
     }
+
+    localStorage.setItem("sessionId", data.sessionId)
+
+    toast({
+      title: "Welcome back!",
+      description: "You have successfully signed in.",
+      className: "text-white",
+      style: {
+        backgroundColor: "hsl(328.1, 78.4%, 60%)"
+      }
+    })
+
+    router.push(callbackUrl) // 👈 Redirects to where user came from
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
