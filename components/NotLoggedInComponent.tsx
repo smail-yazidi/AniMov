@@ -19,7 +19,7 @@ export default function NotLoggedInComponent() {
 
   return (
     <div className="flex flex-col items-center justify-center p-8  text-white max-w-lg mx-auto my-12 ">
-    <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">Movies, TV Series, Anime, Manga, and Books - Everything you need in one place</h1> 
+    <h1 className="text-xl text-gray-300 max-w-2xl mx-auto text-white">Movies, TV Series, Anime, Manga, and Books - Everything you need in one place</h1> 
       <p className="text-lg text-center mb-8 opacity-90">
         Sign in or create an account to create your personal{" "}
         <span className="font-semibold text-red-300">Favorites</span>,{" "}
