@@ -560,7 +560,7 @@ const handleAddToWatchlist = async () => {
       maximumFractionDigits: 0,
     }).format(amount)
   }
-
+console.log(isInReadingList)
   // Helper function to get rating safely
   const getRating = (item: any) => {
     if (!item) return 0
