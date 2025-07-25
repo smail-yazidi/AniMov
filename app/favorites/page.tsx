@@ -6,11 +6,25 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star, Calendar, Trash2, Filter, Search } from "lucide-react";
+import { Trash2, Filter, Search } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { toast } from "@/components/ui/use-toast"; // Assuming shadcn/ui toast
 import NotLoggedInComponent from "@/components/NotLoggedInComponent"; // Import the new component
-import UserDropdown from "@/components/NotLoggedInComponent"; // Import the new component
+import {
+  Star,
+  Heart,BookOpen,Eye,
+  Clock,
+  ArrowLeft,
+  Play,
+  Share2,
+  MessageCircle,
+  ThumbsUp,
+  Film,
+  Tv,
+  Info,
+  Calendar,
+  DollarSign,Book
+} from "lucide-react"
 
 // API Imports - Adjust paths if different in your project
 // Corrected import to use getMovieDetails and getTVShowDetails
@@ -46,6 +60,14 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(false); 
+
+const categories = [
+  { id: "movies", name: "Movies", icon: Film, color: "bg-red-500", urlType: "movie" },
+  { id: "series", name: "TV Series", icon: Tv, color: "bg-blue-500", urlType: "tv" },
+  { id: "anime", name: "Anime", icon: Play, color: "bg-purple-500", urlType: "anime" },
+  { id: "manga", name: "Manga", icon: BookOpen, color: "bg-orange-500", urlType: "manga" },
+  { id: "books", name: "Books", icon: Book, color: "bg-green-500", urlType: "book" },
+]
   useEffect(() => {
     async function fetchFavoritesAndDetails() {
       try {
@@ -441,6 +463,22 @@ export default function FavoritesPage() {
               <Heart className="h-16 w-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No favorites yet</h3>
               <p className="text-gray-400">Start adding your favorite content to see them here</p>
+                <div className="flex flex-wrap justify-center gap-4 max-w-md mx-auto">
+    {categories.map((category) => (
+      <Link 
+        key={category.id}
+        href={`/${category.urlType}`}
+        passHref
+      >
+        <button
+          className={`flex flex-col items-center p-4 rounded-lg ${category.color} bg-opacity-80 hover:bg-opacity-100 transition-all cursor-pointer w-24`}
+        >
+          <category.icon className="h-6 w-6 text-white mb-2" />
+          <span className="text-white text-sm font-medium">{category.name}</span>
+        </button>
+      </Link>
+    ))}
+  </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
