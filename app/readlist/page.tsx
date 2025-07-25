@@ -724,35 +724,58 @@ export default function ReadlistPage() {
                           </Badge>
                         ))}
                       </div>
-                      <div className="mt-3 flex gap-2 justify-center">
-                          {/* Status Update Buttons */}
-                        {item.status !== 'reading' && (
-                            <Button size="sm" onClick={() => updateReadlistItemStatus(item._id, "reading")}>
-                                Reading
-                            </Button>
-                        )}
-                        {item.status !== 'completed' && (
-                            <Button size="sm" onClick={() => updateReadlistItemStatus(item._id, "completed")}>
-                                Completed
-                            </Button>
-                        )}
-                        {/* Add more status buttons as needed (e.g., set to plan-to-read, on-hold, dropped) */}
-                        {item.status !== 'plan-to-read' && (
-                            <Button size="sm" variant="secondary" onClick={() => updateReadlistItemStatus(item._id, "plan-to-read")}>
-                                Plan
-                            </Button>
-                        )}
-                        {item.status !== 'on-hold' && (
-                            <Button size="sm" variant="secondary" onClick={() => updateReadlistItemStatus(item._id, "on-hold")}>
-                                On Hold
-                            </Button>
-                        )}
-                        {item.status !== 'dropped' && (
-                            <Button size="sm" variant="destructive" onClick={() => updateReadlistItemStatus(item._id, "dropped")}>
-                                Dropped
-                            </Button>
-                        )}
-                      </div>
+                   <div className="mt-3 flex flex-wrap gap-2 justify-center">
+  {/* Status Update Buttons */}
+  {item.status !== 'reading' && (
+    <Button
+      size="sm"
+      onClick={() => updateReadlistItemStatus(item._id, "reading")}
+      className="w-full sm:w-auto"
+    >
+      Reading
+    </Button>
+  )}
+  {item.status !== 'completed' && (
+    <Button
+      size="sm"
+      onClick={() => updateReadlistItemStatus(item._id, "completed")}
+      className="w-full sm:w-auto"
+    >
+      Completed
+    </Button>
+  )}
+  {item.status !== 'plan-to-read' && (
+    <Button
+      size="sm"
+      variant="secondary"
+      onClick={() => updateReadlistItemStatus(item._id, "plan-to-read")}
+      className="w-full sm:w-auto"
+    >
+      Plan
+    </Button>
+  )}
+  {item.status !== 'on-hold' && (
+    <Button
+      size="sm"
+      variant="secondary"
+      onClick={() => updateReadlistItemStatus(item._id, "on-hold")}
+      className="w-full sm:w-auto"
+    >
+      On Hold
+    </Button>
+  )}
+  {item.status !== 'dropped' && (
+    <Button
+      size="sm"
+      variant="destructive"
+      onClick={() => updateReadlistItemStatus(item._id, "dropped")}
+      className="w-full sm:w-auto"
+    >
+      Dropped
+    </Button>
+  )}
+</div>
+
                     </div>
                   </CardContent>
                 </Card></Link>
