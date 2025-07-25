@@ -242,7 +242,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 <DialogContent
   className="max-w-7xl max-h-[1000px] h-[700px] mt-[50px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-white/20"
 >
-   <DialogHeader className="h-[40px]">
+   <DialogHeader className="h-[5px]">
   <DialogTitle className="text-white flex items-center gap-2 h-full">
     <Search className="h-5 w-5" />
     Search Content
@@ -250,7 +250,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 </DialogHeader>
 
 
-        <div className="space-y-4 p-0 ">
+        <div className="space-y-4 p-0 h-auto">
           <div className="relative">
             <Search className="absolute left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
