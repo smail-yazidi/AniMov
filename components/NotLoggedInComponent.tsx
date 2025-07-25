@@ -54,9 +54,10 @@ export default function NotLoggedInComponent() {
       clearTimeout(timeoutRef.current);
     }
 
-    // Handle empty string case immediately
+    setter(""); // Always clear the text at the beginning of a new word/sequence
+
     if (textToType.length === 0) {
-      setter("");
+      console.log(`[${typePrefix} Effect] Empty word, skipping typing.`);
       // Optionally schedule next item immediately if word is empty
       timeoutRef.current = setTimeout(() => {
         currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
@@ -64,13 +65,9 @@ export default function NotLoggedInComponent() {
       return; // Exit if nothing to type
     }
 
-    // Set the first character immediately
-    setter(textToType[0]);
-    let charIndex = 1; // Start from the second character for subsequent appends
+    let charIndex = 0; // Start charIndex at 0
 
     console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
-    console.log(`[${typePrefix} Typing] Initial: "${textToType[0]}"`);
-
 
     const typeNextChar = () => {
       console.log(`[${typePrefix} Timer] charIndex: ${charIndex}, textToType.length: ${textToType.length}`);
@@ -82,7 +79,7 @@ export default function NotLoggedInComponent() {
           console.log(`[${typePrefix} Typing] Appending "${textToType[charIndex]}", current typed: "${newText}"`);
           return newText;
         });
-        charIndex++;
+        charIndex++; // Increment charIndex AFTER using it
         timeoutRef.current = setTimeout(typeNextChar, 100); // Schedule next char
       } else {
         // Word is fully typed
@@ -94,8 +91,8 @@ export default function NotLoggedInComponent() {
       }
     };
 
-    // Schedule the typing for the rest of the characters
-    timeoutRef.current = setTimeout(typeNextChar, 100);
+    // Initial call to start typing (no delay for the first char)
+    typeNextChar();
   };
 
   // Effect for typing categories
