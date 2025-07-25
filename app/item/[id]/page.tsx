@@ -482,7 +482,7 @@ const handleAddToWatchlist = async () => {
       let method;
       let successMessage;
       let errorMessage;
-
+console.log("isInFavorites :"+isInFavorites)
       if (isInFavorites) {
         // If already in favorites, remove it (DELETE)
         method = "DELETE";
@@ -560,7 +560,7 @@ const handleAddToWatchlist = async () => {
       maximumFractionDigits: 0,
     }).format(amount)
   }
-console.log(isInReadingList)
+
   // Helper function to get rating safely
   const getRating = (item: any) => {
     if (!item) return 0
