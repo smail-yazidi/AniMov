@@ -21,7 +21,7 @@ import {
   ThumbsUp,
   Film,
   Tv,
-  Info,
+  
   Calendar,
   DollarSign,Book
 } from "lucide-react"
