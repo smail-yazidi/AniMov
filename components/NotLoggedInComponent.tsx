@@ -42,23 +42,23 @@ export default function NotLoggedInComponent() {
 
   // Helper function for typing effect (reusable)
 const typeText = (
-  textToType,
-  setter,
-  currentIndexSetter,
-  totalItemsLength,
-  timeoutRef,
-  typePrefix
+  textToType: string,
+  setter: (value: string) => void,
+  currentIndexSetter: (value: number) => void,
+  totalItemsLength: number,
+  timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>,
+  typePrefix: string
 ) => {
-  // Clear any previous timeout if starting a new typing sequence
+  // Clear any previous timeout
   if (timeoutRef.current) {
     clearTimeout(timeoutRef.current);
   }
 
-  setter(""); // Always clear the text at the beginning of a new word/sequence
+  // Reset the typed text
+  setter("");
 
   if (!textToType || textToType.length === 0) {
     console.log(`[${typePrefix} Effect] Empty word, skipping typing.`);
-    // Schedule next item immediately if word is empty
     timeoutRef.current = setTimeout(() => {
       currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
     }, 1500);
@@ -66,29 +66,31 @@ const typeText = (
   }
 
   let charIndex = 0;
+  const textLength = textToType.length;
 
-  console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
+  console.log(`[${typePrefix} Effect] Starting typing: "${textToType}"`);
 
   const typeNextChar = () => {
-    if (charIndex < textToType.length) {
-      // Append the next character
+    if (charIndex < textLength) {
+      const currentChar = textToType[charIndex];
+      if (currentChar === undefined) {
+        console.error(`[${typePrefix} Error] Undefined character at index ${charIndex}`);
+        charIndex++;
+        timeoutRef.current = setTimeout(typeNextChar, 100);
+        return;
+      }
+
       setter((prev) => {
-        const nextChar = textToType.charAt(charIndex);
-        if (!nextChar) {
-          console.error(`[${typePrefix} Error] Undefined character at index ${charIndex} for "${textToType}"`);
-          return prev; // Skip undefined characters
-        }
-        const newText = prev + nextChar;
-        console.log(`[${typePrefix} Typing] Appending "${nextChar}", current typed: "${newText}"`);
+        const newText = prev + currentChar;
+        console.log(`[${typePrefix} Typing] Appending "${currentChar}", current: "${newText}"`);
         return newText;
       });
+
       charIndex++;
       timeoutRef.current = setTimeout(typeNextChar, 100);
     } else {
-      // Word is fully typed
-      console.log(`[${typePrefix} Finished] Word "${textToType}" fully typed.`);
+      console.log(`[${typePrefix} Finished] Completed: "${textToType}"`);
       timeoutRef.current = setTimeout(() => {
-        console.log(`[${typePrefix} Next Item] Moving to next item.`);
         currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
       }, 1500);
     }
@@ -97,7 +99,6 @@ const typeText = (
   // Start typing
   typeNextChar();
 };
-
   // Effect for typing categories
   useEffect(() => {
     const currentCategoryName = categories[categoryIndex].name;
