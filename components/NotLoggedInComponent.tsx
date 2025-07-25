@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Categories and list types
 const categories = [
   { id: "movies", name: "Movies", icon: Film, color: "text-red-400" },
   { id: "series", name: "TV Series", icon: Tv, color: "text-blue-400" },
@@ -32,62 +31,75 @@ const listTypes = [
   { name: "Readlist", icon: BookOpen, color: "text-green-400" },
 ];
 
-// Feature card component
-function Feature({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
-  return (
-    <div className="flex flex-col items-center text-center">
-      <Icon className={`w-6 h-6 mb-1 ${color}`} />
-      <span className="text-sm text-white">{label}</span>
-    </div>
-  );
-}
-
 export default function NotLoggedInComponent() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [listTypeIndex, setListTypeIndex] = useState(0);
   const [typedCategory, setTypedCategory] = useState("");
   const [typedList, setTypedList] = useState("");
 
-  const categoryTimeoutRef = useRef<any>(null);
-  const listTimeoutRef = useRef<any>(null);
+  const categoryTimeoutRef = useRef(null);
+  const listTimeoutRef = useRef(null);
 
+  // Helper function for typing effect (reusable)
   const typeText = (
-    textToType: string,
-    setter: (value: string) => void,
-    currentIndexSetter: (fn: (prev: number) => number) => void,
-    totalItemsLength: number,
-    timeoutRef: any,
-    typePrefix: string
+    textToType,
+    setter,
+    currentIndexSetter,
+    totalItemsLength,
+    timeoutRef,
+    typePrefix
   ) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // Clear any previous timeout if starting a new typing sequence
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    setter(""); // Reset text
-    if (!textToType.length) {
+    setter(""); // Always clear the text at the beginning of a new word/sequence
+
+    if (textToType.length === 0) {
+      console.log(`[${typePrefix} Effect] Empty word, skipping typing.`);
+      // Optionally schedule next item immediately if word is empty
       timeoutRef.current = setTimeout(() => {
         currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
       }, 1500);
-      return;
+      return; // Exit if nothing to type
     }
 
-    let charIndex = 0;
+    let charIndex = 0; // Start charIndex at 0
+
+    console.log(`[${typePrefix} Effect] Starting new typing sequence for: "${textToType}"`);
 
     const typeNextChar = () => {
+      console.log(`[${typePrefix} Timer] charIndex: ${charIndex}, textToType.length: ${textToType.length}`);
+
       if (charIndex < textToType.length) {
-        setter((prev) => prev + textToType[charIndex]);
-        charIndex++;
-        timeoutRef.current = setTimeout(typeNextChar, 100);
+        // Append the next character
+        setter((prev) => {
+          const newText = prev + textToType[charIndex];
+          console.log(`[${typePrefix} Typing] Appending "${textToType[charIndex]}", current typed: "${newText}"`);
+          return newText;
+        });
+        charIndex++; // Increment charIndex AFTER using it
+        timeoutRef.current = setTimeout(typeNextChar, 100); // Schedule next char
       } else {
+        // Word is fully typed
+        console.log(`[${typePrefix} Finished] Word "${textToType}" fully typed.`);
         timeoutRef.current = setTimeout(() => {
+          console.log(`[${typePrefix} Next Item] Moving to next item.`);
           currentIndexSetter((prev) => (prev + 1) % totalItemsLength);
-        }, 1500);
+        }, 1500); // Delay before moving to next item
       }
     };
 
+    // Initial call to start typing (no delay for the first char)
     typeNextChar();
   };
 
+  // Effect for typing categories
   useEffect(() => {
     const currentCategoryName = categories[categoryIndex].name;
+    console.log(`[Category Effect] useEffect triggered for categoryIndex: ${categoryIndex}, word: "${currentCategoryName}"`);
+
     typeText(
       currentCategoryName,
       setTypedCategory,
@@ -98,12 +110,18 @@ export default function NotLoggedInComponent() {
     );
 
     return () => {
-      if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
+      console.log("[Category Effect] Cleanup: Clearing category timeout on unmount/re-render.");
+      if (categoryTimeoutRef.current) {
+        clearTimeout(categoryTimeoutRef.current);
+      }
     };
   }, [categoryIndex]);
 
+  // Effect for typing list types
   useEffect(() => {
     const currentListName = listTypes[listTypeIndex].name;
+    console.log(`[List Effect] useEffect triggered for listTypeIndex: ${listTypeIndex}, word: "${currentListName}"`);
+
     typeText(
       currentListName,
       setTypedList,
@@ -114,12 +132,16 @@ export default function NotLoggedInComponent() {
     );
 
     return () => {
-      if (listTimeoutRef.current) clearTimeout(listTimeoutRef.current);
+      console.log("[List Effect] Cleanup: Clearing list timeout on unmount/re-render.");
+      if (listTimeoutRef.current) {
+        clearTimeout(listTimeoutRef.current);
+      }
     };
   }, [listTypeIndex]);
 
   const CurrentCategory = categories[categoryIndex];
   const CurrentList = listTypes[listTypeIndex];
+
   const CategoryIcon = CurrentCategory.icon;
   const ListIcon = CurrentList.icon;
 
@@ -151,13 +173,26 @@ export default function NotLoggedInComponent() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-        <Button asChild className="w-full sm:w-auto bg-primary text-white hover:bg-primary/90">
-          <Link href="/sign-in">
-            <LogIn className="w-4 h-4 mr-2" />
-            Sign In
+        <Button asChild className="w-full text-white bg-[hsl(328.1,78.4%,60%)]">
+          <Link href="/auth/signin">
+            <LogIn className="mr-2 h-5 w-5" /> Sign In
           </Link>
         </Button>
+        <Button asChild className="w-full text-white bg-[hsl(328.1,78.4%,60%)] border-none">
+          <Link href="/auth/signup">Create Account</Link>
+        </Button>
       </div>
+
+      <p className="mt-8 text-sm opacity-75">It's quick, easy, and completely free!</p>
+    </div>
+  );
+}
+
+function Feature({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <Icon className={`h-8 w-8 ${color}`} />
+      <span className="text-sm mt-1 text-gray-300">{label}</span>
     </div>
   );
 }
