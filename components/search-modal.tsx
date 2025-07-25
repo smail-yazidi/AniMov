@@ -249,7 +249,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
     <div className="flex flex-col flex-1 overflow-hidden space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-100" />
      <Input
   placeholder="Search movies, TV shows, anime, manga, books..."
   value={searchTerm}
