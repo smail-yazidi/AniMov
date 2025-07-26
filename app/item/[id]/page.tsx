@@ -513,6 +513,7 @@ const handleAddToWatchlist = async () => {
         }),
       });
 console.log("Added to watchlist!")
+    console.log("Current isInWatchlist:", isInWatchlist);
     }
 
     if (!response.ok) {
@@ -638,7 +639,7 @@ console.log("Added to watchlist!")
       maximumFractionDigits: 0,
     }).format(amount)
   }
-
+    console.log("Current isInWatchlist:", isInWatchlist);
   // Helper function to get rating safely
   const getRating = (item: any) => {
     if (!item) return 0
