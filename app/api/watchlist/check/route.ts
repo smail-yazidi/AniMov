@@ -1,8 +1,7 @@
-// /api/watchlist/check/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session-store";
 import connectToDatabase from "@/lib/mongodb";
-import { WatchlistItemModel } from "@/models/WatchlistItem"; // You’ll need this schema
+import { WatchlistItemModel } from "@/models/WatchlistItem";
 import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
@@ -19,10 +18,10 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const contentId = searchParams.get("contentId");
+  const contentIdRaw = searchParams.get("contentId");
   const contentType = searchParams.get("contentType"); // "anime" | "movie" | "tv"
 
-  if (!contentId || !contentType) {
+  if (!contentIdRaw || !contentType) {
     return NextResponse.json(
       { error: "Missing contentId or contentType" },
       { status: 400 }
@@ -36,6 +35,9 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Convert contentId to number if it can be parsed, otherwise leave as string
+  const contentId = isNaN(Number(contentIdRaw)) ? contentIdRaw : Number(contentIdRaw);
 
   await connectToDatabase();
 
