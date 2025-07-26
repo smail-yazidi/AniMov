@@ -84,7 +84,7 @@ useEffect(() => {
   const checkIfInFavorites = async () => {
     const contentId = getContentId(item, type); // Use helper here too
     if (!item || !contentId || !type) return; // Check contentId
-
+console.log("checkIfInFavorites")
     try {
 
              const sessionId = localStorage.getItem("sessionId");
@@ -118,7 +118,7 @@ useEffect(() => {
 const checkIfInWatchlist = async () => {
   const contentId = getContentId(item, type);
   if (!item || !contentId || !type) return;
-
+console.log("checkIfInWatchlist")
   // Only check watchlist for appropriate types
   if (type !== 'movie' && type !== 'tv') {
     setIsInWatchlist(false);
@@ -153,7 +153,7 @@ const checkIfInReadingList = async () => {
     setIsInReadingList(false);
     return;
   }
-
+console.log("checkIfInReadingList")
   // Only check for book or manga types
   if (type !== 'book' && type !== 'manga') {
     setIsInReadingList(false);

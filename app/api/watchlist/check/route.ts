@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const contentIdRaw = searchParams.get("contentId");
-  const contentType = searchParams.get("contentType"); // "anime" | "movie" | "tv"
+  const contentType = searchParams.get("contentType");
 
   if (!contentIdRaw || !contentType) {
     return NextResponse.json(
@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Validate allowed content types
   if (!["anime", "movie", "tv"].includes(contentType)) {
     return NextResponse.json(
       { error: "Invalid contentType for watchlist check" },
@@ -36,8 +35,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Convert contentId to number if it can be parsed, otherwise leave as string
-  const contentId = isNaN(Number(contentIdRaw)) ? contentIdRaw : Number(contentIdRaw);
+  // ✅ Always use string for contentId
+  const contentId = String(contentIdRaw);
 
   await connectToDatabase();
 
