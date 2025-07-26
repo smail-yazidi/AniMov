@@ -186,35 +186,52 @@ export async function DELETE(req: Request) {
         }
 
         const body = await req.json();
-        const { _id, contentId, contentType } = body;
+        const { contentId, contentType } = body;
 
-        let query: any = { userId: new mongoose.Types.ObjectId(userId) };
-
-        if (_id && mongoose.Types.ObjectId.isValid(_id)) {
-            query._id = new mongoose.Types.ObjectId(_id);
-        } else if (contentId && contentType) {
-            query.contentId = contentId;
-            query.contentType = contentType;
-        } else {
+        if (!contentId || !contentType) {
             return NextResponse.json(
-                { error: "Invalid or missing parameters for deletion. Need either _id or both contentId and contentType" },
+                { error: "Missing contentId or contentType for deletion" },
                 { status: 400 }
             );
         }
 
-        const deleted = await WatchlistItemModel.findOneAndDelete(query);
-
-        if (!deleted) {
-            return NextResponse.json({ error: "Watchlist item not found or unauthorized to delete" }, { status: 404 });
+        // Validate content type
+        if (!["movie", "tv", "anime"].includes(contentType)) {
+            return NextResponse.json(
+                { error: "Invalid contentType for watchlist deletion" },
+                { status: 400 }
+            );
         }
 
-        console.log("Watchlist item successfully removed.");
-        return NextResponse.json({ message: "Watchlist item removed successfully" }, { status: 200 });
+        const deleted = await WatchlistItemModel.findOneAndDelete({
+            userId: new mongoose.Types.ObjectId(userId),
+            contentId,
+            contentType,
+        });
+
+        if (!deleted) {
+            return NextResponse.json(
+                { error: "Watchlist item not found or unauthorized to delete" },
+                { status: 404 }
+            );
+        }
+
+        console.log("Watchlist item successfully removed:", { contentId, contentType });
+        return NextResponse.json(
+            { message: "Watchlist item removed successfully" },
+            { status: 200 }
+        );
     } catch (error) {
         console.error("Error removing watchlist item:", error);
         if (error instanceof Error) {
-            return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+            return NextResponse.json(
+                { error: error.message || "Internal Server Error" },
+                { status: 500 }
+            );
         }
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+        );
     }
 }

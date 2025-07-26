@@ -460,9 +460,6 @@ const handleAddToReadingList = async () => {
   }
 };
 const handleAddToWatchlist = async () => {
-  console.log("clicked");
-
-  // Get the correct ID based on the item type
   const contentId = getContentId(item, type);
 
   if (!item || !contentId || !type) {
@@ -470,61 +467,43 @@ const handleAddToWatchlist = async () => {
     return;
   }
 
-  console.log("Info exists. Details:");
-  console.log("Item:", item);
-  console.log("Content ID:", contentId);
-  console.log("Type:", type);
-  console.log("Current isInWatchlist:", isInWatchlist);
+  console.log("Toggling watchlist status...", {
+    contentId,
+    type,
+    currentState: isInWatchlist
+  });
 
   try {
     const sessionId = localStorage.getItem("sessionId");
     if (!sessionId) {
-      throw new Error("No session found. Please log in.");
+      throw new Error("Please log in to manage your watchlist");
     }
 
-    let response;
-    let successMessage;
-    
-    if (isInWatchlist) {
-      // If already in watchlist, remove it (DELETE)
-      response = await fetch("/api/watchlist", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionId}`,
-        },
-        body: JSON.stringify({
-          contentId: contentId,
-          contentType: type,
-        }),
-      });
-     console.log(  "Removed from watchlist!")
-    } else {
-      // If not in watchlist, add it (POST)
-      response = await fetch("/api/watchlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionId}`,
-        },
-        body: JSON.stringify({
-          contentId: contentId,
-          contentType: type,
-        }),
-      });
-console.log("Added to watchlist!")
-    console.log("Current isInWatchlist:", isInWatchlist);
-    }
+    const method = isInWatchlist ? "DELETE" : "POST";
+    const endpoint = "/api/watchlist";
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionId}`,
+      },
+      body: JSON.stringify({
+        contentId,
+        contentType: type,
+      }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("Server error response:", errorData);
       throw new Error(errorData.error || "Operation failed");
     }
 
-    // Update local state and show success message
+    // Update state based on action
     setIsInWatchlist(!isInWatchlist);
-    toast({ title: successMessage });
+    toast({
+      title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
+    });
 
   } catch (error) {
     console.error("Error toggling watchlist:", error);
@@ -535,7 +514,6 @@ console.log("Added to watchlist!")
     });
   }
 };
- 
  const handleAddToFavorites = async () => {
     const contentId = getContentId(item, type);
 
