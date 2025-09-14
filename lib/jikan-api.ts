@@ -335,7 +335,7 @@ class JikanAPI {
     return this.makeRequest<JikanResponse<{ entry: JikanAnime }>>(`/anime/${id}/recommendations`)
   }
 
-  // Manga methods
+ 
   async getTopManga(page = 1, type?: string): Promise<JikanResponse<JikanManga>> {
     let endpoint = `/top/manga?page=${page}&limit=25`
     if (type) {
